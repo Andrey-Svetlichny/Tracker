@@ -297,9 +297,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_BLUE_Pin */
   GPIO_InitStruct.Pin = LED_BLUE_Pin;
@@ -313,6 +317,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(KEY_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BAT_CHARGE_Pin */
+  GPIO_InitStruct.Pin = BAT_CHARGE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(BAT_CHARGE_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -336,14 +347,16 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
   if (vin > 4.5 && vbat < 4.0)
   {
     // charge battery
+    HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_RESET);
 
     // switch ON onboard blue LED
     HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
-    }
-    else
-    {
-      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
-    }
+  }
+  else
+  {
+    HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+  }
  }
 
 /* USER CODE END 4 */
