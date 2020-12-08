@@ -93,6 +93,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // blink onboard blue LED
+    HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+    if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_RESET) {
+      // onboard key pressed
+      HAL_Delay(500);
+    }
+    else
+    {
+      HAL_Delay(1000);
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
