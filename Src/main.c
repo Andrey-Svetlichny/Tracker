@@ -46,7 +46,7 @@ DMA_HandleTypeDef hdma_adc1;
 TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
-
+uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -320,8 +320,31 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
   // blink onboard blue LED
-  HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+  // HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+  // start ADC in DMA mode
+  HAL_ADC_Start_DMA(&hadc1, adc_raw, 2);
 }
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+  // stop ADC
+  HAL_ADC_Stop_DMA(hadc);
+  // Vin measured on A1 - 6k8/10k
+  float vin = adc_raw[0] * 0.001358;
+  // Vbat
+  float vbat = adc_raw[1] * 0.00339;
+
+  if (vin > 4.5 && vbat < 4.0)
+  {
+    // charge battery
+
+    // switch ON onboard blue LED
+    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+    }
+    else
+    {
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+    }
+ }
 
 /* USER CODE END 4 */
 
