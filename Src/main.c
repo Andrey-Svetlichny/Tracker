@@ -416,14 +416,29 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(mavlink_parse_char(MAVLINK_COMM_0, uart1RX[0], &msg, &status))
 	{
+		if (msg.msgid == 0)
+      return;
+
 		if (msg.msgid == MAVLINK_MSG_ID_ATTITUDE) { // msgid == 30
 			mavlink_attitude_t attitude;
 			mavlink_msg_attitude_decode(&msg, &attitude);
 
-			uint8_t text[40];
-			sprintf((char *)&text, "yaw= %.2f\npitch = %.2f\nroll= %.2f", attitude.yaw, attitude.pitch, attitude.roll);
+			uint8_t text[80];
+			sprintf((char *)&text, "yaw= %.2f\npitch= %.2f\nroll= %.2f", attitude.yaw, attitude.pitch, attitude.roll);
 			// display((char *)&text);
+      return;
 		}
+
+    if (msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT)
+    {
+      mavlink_global_position_int_t global_position_int;
+      mavlink_msg_global_position_int_decode(&msg, &global_position_int);
+
+			uint8_t text[80];
+			sprintf((char *)&text, "lat= %d\nlon= %d\nalt= %d", global_position_int.lat, global_position_int.lon, global_position_int.alt);
+
+      return;
+    }
 	}
 }
 /* USER CODE END 4 */
