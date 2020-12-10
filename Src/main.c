@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "mavlink_v2/standard/mavlink.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,6 +51,15 @@ DMA_HandleTypeDef hdma_usart1_rx;
 /* USER CODE BEGIN PV */
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
 uint8_t uart1RX[1]; // mavlink
+
+mavlink_system_t mavlink_system = {
+	1, 	 // System ID (1-255)
+	158    // Component ID (a MAV_COMPONENT value)
+};
+
+mavlink_status_t status;
+mavlink_message_t msg;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -405,9 +414,17 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  // mavlink data char by char in uart1RX
-	/* Prevent unused argument(s) compilation warning */
-	UNUSED(huart);
+	if(mavlink_parse_char(MAVLINK_COMM_0, uart1RX[0], &msg, &status))
+	{
+		if (msg.msgid == MAVLINK_MSG_ID_ATTITUDE) { // msgid == 30
+			mavlink_attitude_t attitude;
+			mavlink_msg_attitude_decode(&msg, &attitude);
+
+			uint8_t text[40];
+			sprintf((char *)&text, "yaw= %.2f\npitch = %.2f\nroll= %.2f", attitude.yaw, attitude.pitch, attitude.roll);
+			// display((char *)&text);
+		}
+	}
 }
 /* USER CODE END 4 */
 
