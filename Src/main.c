@@ -50,6 +50,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
+uint8_t uart1RX[1]; // mavlink
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,6 +103,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
+
+  HAL_UART_Receive_DMA(&huart1, uart1RX, sizeof(uart1RX));
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -400,6 +403,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
   }
  }
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  // mavlink data char by char in uart1RX
+	/* Prevent unused argument(s) compilation warning */
+	UNUSED(huart);
+}
 /* USER CODE END 4 */
 
 /**
