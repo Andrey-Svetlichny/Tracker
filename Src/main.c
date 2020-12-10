@@ -52,6 +52,8 @@ DMA_HandleTypeDef hdma_usart1_rx;
 /* USER CODE BEGIN PV */
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
 uint8_t uart1RX[1]; // mavlink
+uint8_t Tx2Data[64]; // SIM800l
+uint8_t Rx2Data[64]; // SIM800l
 
 mavlink_system_t mavlink_system = {
 	1, 	 // System ID (1-255)
@@ -77,6 +79,60 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// switch onboard blue LED on and off
+static void LED_Blink(uint32_t Hdelay, uint32_t Ldelay)
+{
+	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+	HAL_Delay(Hdelay - 1);
+	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+	HAL_Delay(Ldelay - 1);
+}
+
+// send command to SIM800L, return response
+static char* sim800(char* cmd)
+{
+	strcpy((char*)Tx2Data, cmd);
+	strcpy((char*)Tx2Data + strlen(cmd), "\n\r");
+	HAL_UART_Transmit(&huart2, Tx2Data, strlen((char*)Tx2Data), 200);
+	memset(Rx2Data, 0x00, sizeof(Rx2Data));
+	HAL_UART_Receive(&huart2, Rx2Data, sizeof(Rx2Data), 1000);
+	return (char*) Rx2Data;
+}
+
+static void sim800cmd(char* cmd)
+{
+	// display(cmd);
+	// display(
+    sim800(cmd)
+    // )
+    ;
+	LED_Blink(5, 100);
+	HAL_Delay(1000);
+}
+
+static void sim800start()
+{
+  sim800cmd("ATI");
+	sim800cmd("AT+CSQ");
+	sim800cmd("AT+CGATT?");
+	sim800cmd("AT+CSTT=\"TM\"");
+	sim800cmd("AT+CIICR");
+	sim800cmd("AT+CIFSR");
+	sim800cmd("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300");
+}
+
+static void sim800send(char* msg)
+{
+	sim800cmd("AT+CIPSEND");
+	sim800cmd("hello from SIM800 \x1A");
+}
+
+static void sim800stop()
+{
+	sim800cmd("AT+CIPCLOSE");
+	sim800cmd("AT+CIPSHUT");
+}
 
 /* USER CODE END 0 */
 
@@ -115,8 +171,10 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
-
   HAL_UART_Receive_DMA(&huart1, uart1RX, sizeof(uart1RX));
+  sim800start();
+  sim800send("Hello from SIM800");
+  sim800stop();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -471,7 +529,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       mavlink_msg_global_position_int_decode(&msg, &global_position_int);
 
 			uint8_t text[80];
-			sprintf((char *)&text, "lat= %d\nlon= %d\nalt= %d", global_position_int.lat, global_position_int.lon, global_position_int.alt);
+			sprintf((char *)&text, "lat= %ld\nlon= %ld\nalt= %ld", global_position_int.lat, global_position_int.lon, global_position_int.alt);
 
       return;
     }
