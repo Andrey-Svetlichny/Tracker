@@ -15,7 +15,9 @@
             "configFiles": [
                 "interface/stlink.cfg",
                 "target/stm32f4x.cfg"
-            ]
+            ],
+            "svdFile": "./STM32F401.svd",
+            "runToMain": true
         }
     ]
 }
