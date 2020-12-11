@@ -1,0 +1,296 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L myLib:BlackPill U?
+U 1 1 5FBB3C61
+P 5000 3550
+F 0 "U?" H 5000 4765 50  0000 C CNN
+F 1 "STM32F401 BlackPill" H 5000 4674 50  0000 C CNN
+F 2 "" H 5100 4650 50  0001 C CNN
+F 3 "" H 5100 4650 50  0001 C CNN
+	1    5000 3550
+	1    0    0    -1  
+$EndComp
+$Comp
+L myLib:SIM800L U?
+U 1 1 5FBB5448
+P 7400 3750
+F 0 "U?" H 7678 3796 50  0000 L CNN
+F 1 "SIM800L" H 7678 3705 50  0000 L CNN
+F 2 "" H 7400 4150 50  0001 C CNN
+F 3 "" H 7400 4150 50  0001 C CNN
+	1    7400 3750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6250 3700 6250 3900
+Wire Wire Line
+	7050 3600 6900 3600
+$Comp
+L Device:R R?
+U 1 1 5FBC7BFE
+P 5650 3400
+F 0 "R?" H 5500 3350 50  0000 C CNN
+F 1 "3k3" H 5500 3450 50  0000 C CNN
+F 2 "" V 5580 3400 50  0001 C CNN
+F 3 "~" H 5650 3400 50  0001 C CNN
+	1    5650 3400
+	-1   0    0    1   
+$EndComp
+$Comp
+L Device:CP C?
+U 1 1 5FBC947C
+P 6450 4650
+F 0 "C?" H 6700 4700 50  0000 C CNN
+F 1 "470mF" H 6700 4600 50  0000 C CNN
+F 2 "" H 6488 4500 50  0001 C CNN
+F 3 "~" H 6450 4650 50  0001 C CNN
+	1    6450 4650
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4200 4400 4550 4400
+Wire Wire Line
+	4300 3700 4300 4300
+Wire Wire Line
+	4300 4300 4550 4300
+Wire Wire Line
+	4200 3800 4200 4400
+Wire Wire Line
+	4100 3700 4300 3700
+Wire Wire Line
+	4550 4000 4100 4000
+Wire Wire Line
+	4100 3900 4550 3900
+Wire Wire Line
+	4100 3800 4200 3800
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 5FBCF7C1
+P 3900 3200
+F 0 "J?" H 4000 3550 50  0000 C CNN
+F 1 "FC UART" H 4000 3450 50  0000 C CNN
+F 2 "" H 3900 3200 50  0001 C CNN
+F 3 "~" H 3900 3200 50  0001 C CNN
+	1    3900 3200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4100 3100 4550 3100
+Wire Wire Line
+	4550 3200 4100 3200
+$Comp
+L myLib:OLED_SSD1306 U?
+U 1 1 5FBCCE2D
+P 3700 3850
+F 0 "U?" H 3700 3500 50  0000 C CNN
+F 1 "OLED_SSD1306" H 3700 3400 50  0000 C CNN
+F 2 "" H 3700 4250 50  0001 C CNN
+F 3 "" H 3700 4250 50  0001 C CNN
+	1    3700 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4100 3300 4300 3300
+Connection ~ 4300 3700
+Wire Wire Line
+	4100 3400 4200 3400
+Wire Wire Line
+	4200 3400 4200 3800
+Connection ~ 4200 3800
+$Comp
+L Device:R R?
+U 1 1 5FBD5AD0
+P 6650 3450
+F 0 "R?" H 6720 3496 50  0000 L CNN
+F 1 "10" H 6720 3405 50  0000 L CNN
+F 2 "" V 6580 3450 50  0001 C CNN
+F 3 "~" H 6650 3450 50  0001 C CNN
+	1    6650 3450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4200 4400 4200 4800
+Connection ~ 4200 4400
+Wire Wire Line
+	5450 3700 6250 3700
+$Comp
+L Device:D D?
+U 1 1 5FC14E46
+P 4300 3450
+F 0 "D?" V 4346 3370 50  0000 R CNN
+F 1 "D" V 4255 3370 50  0000 R CNN
+F 2 "" H 4300 3450 50  0001 C CNN
+F 3 "~" H 4300 3450 50  0001 C CNN
+	1    4300 3450
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4300 3600 4300 3700
+$Comp
+L Transistor_BJT:2N3906 Q?
+U 1 1 5FC19268
+P 6550 3100
+F 0 "Q?" H 6300 3200 50  0000 L CNN
+F 1 "2N3906" H 6300 3300 50  0000 L CNN
+F 2 "Package_TO_SOT_THT:TO-92_Inline" H 6750 3025 50  0001 L CIN
+F 3 "https://www.onsemi.com/pub/Collateral/2N3906-D.PDF" H 6550 3100 50  0001 L CNN
+	1    6550 3100
+	1    0    0    1   
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5FC1A3F2
+P 5850 3100
+F 0 "R?" V 5643 3100 50  0000 C CNN
+F 1 "330" V 5734 3100 50  0000 C CNN
+F 2 "" V 5780 3100 50  0001 C CNN
+F 3 "~" H 5850 3100 50  0001 C CNN
+	1    5850 3100
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:Battery_Cell BT?
+U 1 1 5FBD92D9
+P 5900 4700
+F 0 "BT?" H 6150 4800 50  0000 C CNN
+F 1 "250mAh" H 6150 4700 50  0000 C CNN
+F 2 "" V 5900 4760 50  0001 C CNN
+F 3 "~" V 5900 4760 50  0001 C CNN
+	1    5900 4700
+	1    0    0    -1  
+$EndComp
+Connection ~ 7050 4800
+Wire Wire Line
+	4200 4800 5650 4800
+$Comp
+L power:GND #PWR?
+U 1 1 5FC14128
+P 7050 4800
+F 0 "#PWR?" H 7050 4550 50  0001 C CNN
+F 1 "GND" H 7055 4627 50  0000 C CNN
+F 2 "" H 7050 4800 50  0001 C CNN
+F 3 "" H 7050 4800 50  0001 C CNN
+	1    7050 4800
+	1    0    0    -1  
+$EndComp
+Connection ~ 5900 4500
+Wire Wire Line
+	5900 4500 5450 4500
+Connection ~ 5900 4800
+Wire Wire Line
+	5900 4800 6450 4800
+Wire Wire Line
+	7050 4000 7050 4800
+Connection ~ 6450 4500
+Connection ~ 6450 4800
+Wire Wire Line
+	6450 4800 7050 4800
+Wire Wire Line
+	5450 3800 7050 3800
+Wire Wire Line
+	5650 3900 5650 4100
+Wire Wire Line
+	5450 3900 5650 3900
+Wire Wire Line
+	5650 4400 5650 4800
+Connection ~ 5650 4800
+Wire Wire Line
+	5650 4800 5900 4800
+Connection ~ 5650 3900
+Wire Wire Line
+	7050 3900 6250 3900
+Wire Wire Line
+	6650 2600 6650 2900
+Wire Wire Line
+	5450 2600 5650 2600
+$Comp
+L Device:LED D?
+U 1 1 5FC2FAC7
+P 6200 3100
+F 0 "D?" H 6193 3317 50  0000 C CNN
+F 1 "LED" H 6193 3226 50  0000 C CNN
+F 2 "" H 6200 3100 50  0001 C CNN
+F 3 "~" H 6200 3100 50  0001 C CNN
+	1    6200 3100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6000 3100 6050 3100
+Wire Wire Line
+	5450 3100 5700 3100
+$Comp
+L Device:D D?
+U 1 1 5FC34600
+P 6900 3100
+F 0 "D?" V 6854 3180 50  0000 L CNN
+F 1 "D" V 6945 3180 50  0000 L CNN
+F 2 "" H 6900 3100 50  0001 C CNN
+F 3 "~" H 6900 3100 50  0001 C CNN
+	1    6900 3100
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	6900 3250 6900 3600
+Connection ~ 6900 3600
+Wire Wire Line
+	6900 3600 6650 3600
+Wire Wire Line
+	6900 2950 6900 2600
+Wire Wire Line
+	6900 2600 6650 2600
+Connection ~ 6650 2600
+$Comp
+L Device:R R?
+U 1 1 5FBC87D2
+P 5650 4250
+F 0 "R?" H 5800 4300 50  0000 C CNN
+F 1 "10k" H 5800 4200 50  0000 C CNN
+F 2 "" V 5580 4250 50  0001 C CNN
+F 3 "~" H 5650 4250 50  0001 C CNN
+	1    5650 4250
+	1    0    0    -1  
+$EndComp
+Text Notes 4250 3200 0    50   ~ 0
+UART1 TX
+Text Notes 4250 3100 0    50   ~ 0
+UART1 RX\n
+Text Notes 5400 3700 0    50   ~ 0
+UART2 RX\n
+Text Notes 5400 3800 0    50   ~ 0
+UART2 TX
+Wire Wire Line
+	5650 3250 5650 2600
+Connection ~ 5650 2600
+Wire Wire Line
+	5650 2600 6650 2600
+Wire Wire Line
+	5650 3550 5650 3900
+Wire Wire Line
+	5900 4500 6450 4500
+Wire Wire Line
+	6900 4500 6900 3600
+Wire Wire Line
+	6450 4500 6900 4500
+Text Notes 3750 3100 0    50   ~ 0
+TX
+Text Notes 3750 3200 0    50   ~ 0
+RX
+Text Notes 3750 3300 0    50   ~ 0
+5V
+Text Notes 3750 3400 0    50   ~ 0
+G
+$EndSCHEMATC
