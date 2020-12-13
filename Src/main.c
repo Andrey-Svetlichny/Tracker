@@ -23,6 +23,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "mavlink_v2/standard/mavlink.h"
+#include "ssd1306/ssd1306.h"
+#include "ssd1306/fonts.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,6 +94,23 @@ static void LED_Blink(uint32_t Hdelay, uint32_t Ldelay)
 	HAL_Delay(Ldelay - 1);
 }
 
+// show message on OLED display
+static void display(char *str)
+{
+	char delim[] = "\r\n";
+	char *ptr = strtok(str, delim);
+	SSD1306_Clear();
+	u_int16_t y = 0;
+	while (ptr!=NULL)
+	{
+		SSD1306_GotoXY(0, y);
+		SSD1306_Puts(ptr, &Font_7x10, 1);
+		SSD1306_UpdateScreen();
+		ptr = strtok(NULL, delim);
+		y += 12;
+	}
+}
+
 // send command to SIM800L, return response
 static char* sim800(char* cmd)
 {
@@ -105,11 +124,8 @@ static char* sim800(char* cmd)
 
 static void sim800cmd(char* cmd)
 {
-	// display(cmd);
-	// display(
-    sim800(cmd)
-    // )
-    ;
+	display(cmd);
+	display(sim800(cmd));
 	LED_Blink(5, 100);
 	HAL_Delay(1000);
 }
@@ -174,8 +190,13 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_Delay(50); // wait at least 20ms for SSD1306
+  SSD1306_Init();
+  display("Hello STM32");
+
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_UART_Receive_DMA(&huart1, uart1RX, sizeof(uart1RX));
+  HAL_Delay(10000); // wait for SIM800L
   sim800start();
   sim800send("Hello from SIM800");
   sim800stop();
