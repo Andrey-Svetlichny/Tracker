@@ -67,6 +67,9 @@ mavlink_system_t mavlink_system = {
 mavlink_status_t status;
 mavlink_message_t msg;
 
+bool sendTelemetry;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -130,21 +133,32 @@ static void sim800cmd(char* cmd)
 	HAL_Delay(1000);
 }
 
+static void sim800info()
+{
+  sim800cmd("ATI");    // Display Product Identification Information
+	sim800cmd("AT+CSQ"); // Signal Quality Report
+}
+
 static void sim800start()
 {
-  sim800cmd("ATI");
-	sim800cmd("AT+CSQ");
-	sim800cmd("AT+CGATT?");
-	sim800cmd("AT+CSTT=\"TM\"");
-	sim800cmd("AT+CIICR");
-	sim800cmd("AT+CIFSR");
+  // sim800info();
+	// sim800cmd("AT+CGATT?");  // Attach or Detach from GPRS Service - Check if the MS is connected to the GPRS network 
+	sim800cmd("AT+CSTT=\"TM\"");  // Set APN
+	sim800cmd("AT+CIICR");  // Bring up wireless connection with GPRS or CSD
+	sim800cmd("AT+CIFSR");  // Get local IP address
+  // Start Up TCP Connection
 	sim800cmd("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300");
 }
 
 static void sim800send(char* msg)
 {
-	sim800cmd("AT+CIPSEND");
-	sim800cmd("hello from SIM800 \x1A");
+	// sim800cmd("AT+CIPSEND");
+	// sim800cmd("hello from SIM800 \x1A");
+
+  uint8_t cmd[80];
+  sprintf((char *)&cmd, "AT+CIPSEND= %d", strlen(msg));
+	sim800cmd(cmd);
+	sim800cmd(msg);
 }
 
 static void sim800stop()
@@ -196,16 +210,26 @@ int main(void)
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_UART_Receive_DMA(&huart1, uart1RX, sizeof(uart1RX));
-  HAL_Delay(10000); // wait for SIM800L
-  sim800start();
-  sim800send("Hello from SIM800");
-  sim800stop();
+
+  /*
+   HAL_Delay(10000); // wait for SIM800L
+  */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    if (sendTelemetry)
+    {
+      display("Sending Telemetry");
+      HAL_Delay(500);
+      sim800start();
+      sim800send("Hello from SIM800");
+      sim800stop();
+      sendTelemetry = false;
+    }
+    
     /*
     // blink onboard blue LED
     HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
@@ -379,9 +403,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 21000;
+  htim3.Init.Prescaler = 4200;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 40000;
+  htim3.Init.Period = 1000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -534,12 +558,37 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// every 50 ms - timer3
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
+  static int cntADC = 0;
+  static int cntKeyPress = 0;
+
   // blink onboard blue LED
   // HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-  // start ADC in DMA mode
-  HAL_ADC_Start_DMA(&hadc1, adc_raw, 2);
+
+  if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_RESET) 
+  {
+    if(++cntKeyPress == 5) {
+      // key pressed for 250 ms - switch ON onboard blue LED
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+
+    } else if (cntKeyPress == 20)
+    {
+      // key pressed for 1 sec - switch OFF onboard blue LED and send telemetry
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+      sendTelemetry = true;
+    }
+  } else {
+    cntKeyPress = 0;
+  }
+  
+  if (++cntADC == 100)
+  {
+    cntADC = 0;
+    // every 5 sec start ADC in DMA mode
+    HAL_ADC_Start_DMA(&hadc1, adc_raw, 2);
+  }  
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
@@ -554,14 +603,10 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
   {
     // charge battery
     HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_RESET);
-
-    // switch ON onboard blue LED
-    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
   }
   else
   {
     HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   }
  }
 

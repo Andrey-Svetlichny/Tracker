@@ -27,3 +27,9 @@ http://gnuwin32.sourceforge.net/downlinks/make-dep-zip.php
 
 https://gnutoolchains.com/arm-eabi/openocd/
 https://sysprogs.com/getfile/1180/openocd-20200729.7z
+
+# Compile and run from [VS Code] terminal
+
+```
+make flash
+```
