@@ -108,11 +108,18 @@ static void display(char *str)
 	{
 		SSD1306_GotoXY(0, y);
 		SSD1306_Puts(ptr, &Font_7x10, 1);
-		SSD1306_UpdateScreen();
 		ptr = strtok(NULL, delim);
 		y += 12;
 	}
+	SSD1306_UpdateScreen();
 }
+
+/*
+static void displayScroll()
+{
+  SSD1306_Scrolldiagright(0x0F, 0x0F);
+}
+*/
 
 // send command to SIM800L, return response
 static char* sim800(char* cmd)
@@ -125,46 +132,75 @@ static char* sim800(char* cmd)
 	return (char*) Rx2Data;
 }
 
-static void sim800cmd(char* cmd)
+// send command to SIM800L, check response
+static bool sim800check(char* cmd, char* result, bool expectedResult)
+{
+  char* res = sim800(cmd);
+  if (expectedResult && !strcmp(res, result))
+    return true;
+  if (!expectedResult && strcmp(res, result))
+    return true;
+  
+  char msg[80];
+  sprintf(msg, "%s\r\nERROR\r\n%s", cmd, res);
+  display(msg);
+  HAL_Delay(5000);
+  return false;
+}
+
+/*
+static char* sim800display(char* cmd)
 {
 	display(cmd);
-	display(sim800(cmd));
+  char* res = sim800(cmd);
+	display(res);
 	LED_Blink(5, 100);
 	HAL_Delay(1000);
 }
 
 static void sim800info()
 {
-  sim800cmd("ATI");    // Display Product Identification Information
-	sim800cmd("AT+CSQ"); // Signal Quality Report
+  sim800display("ATI");    // Display Product Identification Information
+	sim800display("AT+CSQ"); // Signal Quality Report
+	sim800display("AT+CGATT?");  // Attach or Detach from GPRS Service - Check if the MS is connected to the GPRS network 
 }
+*/
 
-static void sim800start()
+static bool sim800connect()
 {
-  // sim800info();
-	// sim800cmd("AT+CGATT?");  // Attach or Detach from GPRS Service - Check if the MS is connected to the GPRS network 
-	sim800cmd("AT+CSTT=\"TM\"");  // Set APN
-	sim800cmd("AT+CIICR");  // Bring up wireless connection with GPRS or CSD
-	sim800cmd("AT+CIFSR");  // Get local IP address
+  // Set Command Echo Mode OFF
+  sim800("ATE0");
+  // Set APN 
+  if (!sim800check("AT+CSTT=\"TM\"", "\r\nOK\r\n", true)) return false;
+  // Bring up wireless connection with GPRS or CSD
+  if (!sim800check("AT+CIICR", "\r\nOK\r\n", true)) return false;
+  // Get local IP address
+  if (!sim800check("AT+CIFSR", "\r\nERROR\r\n", false)) return false;
   // Start Up TCP Connection
-	sim800cmd("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300");
+  if (!sim800check("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300", "\r\nOK\r\n", true)) return false;
+  return true; 
 }
 
-static void sim800send(char* msg)
+static bool sim800send(char* msg)
 {
-	// sim800cmd("AT+CIPSEND");
-	// sim800cmd("hello from SIM800 \x1A");
-
-  uint8_t cmd[80];
-  sprintf((char *)&cmd, "AT+CIPSEND= %d", strlen(msg));
-	sim800cmd(cmd);
-	sim800cmd(msg);
+  char cmd[22];
+  sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
+  char* res = sim800(cmd);
+  if (!strcmp(res, "\r\r\n> "))
+  {
+    res = sim800(msg);
+    return (!strcmp(res, "\r\nSEND OK\r\n"));
+  }
+  return false;
 }
 
-static void sim800stop()
+static bool sim800disconnect()
 {
-	sim800cmd("AT+CIPCLOSE");
-	sim800cmd("AT+CIPSHUT");
+  // Close TCP Connection
+  if (!sim800check("AT+CIPCLOSE", "\r\nCLOSE OK\r\n", true)) return false;
+  // Deactivate GPRS PDP Context
+  if (!sim800check("AT+CIPSHUT", "\r\nSHUT OK\r\n", true)) return false;
+  return true;
 }
 
 /* USER CODE END 0 */
@@ -224,9 +260,32 @@ int main(void)
     {
       display("Sending Telemetry");
       HAL_Delay(500);
-      sim800start();
-      sim800send("Hello from SIM800");
-      sim800stop();
+
+      if (sim800connect())
+      {
+        display("Connect OK");
+        HAL_Delay(1000);
+        display("Send");
+        if (sim800send("Hello from SIM800"))
+        {
+          display("Send OK");
+          HAL_Delay(1000);
+    } else {
+          display("Send ERROR");
+          HAL_Delay(1000);
+        }
+      } else {
+        display("Connect ERROR");
+        HAL_Delay(1000);
+      }
+      
+   	  display("Disconnect");
+      if (sim800disconnect())
+      {
+     	  display("Disconnect OK");
+      } else {
+        display("Disconnect ERROR");
+      }
       sendTelemetry = false;
     }
     
@@ -573,6 +632,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
       // key pressed for 250 ms - switch ON onboard blue LED
       HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
 
+      // displayScroll();
     } else if (cntKeyPress == 20)
     {
       // key pressed for 1 sec - switch OFF onboard blue LED and send telemetry
@@ -581,6 +641,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
     }
   } else {
     cntKeyPress = 0;
+    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   }
   
   if (++cntADC == 100)
