@@ -55,6 +55,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
+float vbat; // battery voltage
 uint8_t uart1RX[1]; // mavlink
 uint8_t Tx2Data[64]; // SIM800l
 uint8_t Rx2Data[64]; // SIM800l
@@ -114,6 +115,22 @@ static void display(char *str)
 	SSD1306_UpdateScreen();
 }
 
+static void displayBatteryVoltage() {
+	uint8_t text[20];
+	sprintf((char *)&text, "%.2fV", vbat);
+	SSD1306_Clear();
+	SSD1306_GotoXY(22, 12);
+	SSD1306_Puts((char *)&text, &Font_16x26, 1);
+	SSD1306_UpdateScreen();
+	if (vbat < 3.5)
+	{
+		sprintf((char *)&text, "LOW BATTERY");
+		SSD1306_GotoXY(0, 40);
+		SSD1306_Puts((char *)&text, &Font_11x18, 1);
+		SSD1306_UpdateScreen();
+	}
+}
+
 /*
 static void displayScroll()
 {
@@ -132,19 +149,22 @@ static char* sim800(char* cmd)
 	return (char*) Rx2Data;
 }
 
-// send command to SIM800L, check response
-static bool sim800check(char* cmd, char* result, bool expectedResult)
+static bool displaySim800error(char* cmd, char* result)
 {
-  char* res = sim800(cmd);
-  if (expectedResult && !strcmp(res, result))
-    return true;
-  if (!expectedResult && strcmp(res, result))
-    return true;
-  
   char msg[80];
-  sprintf(msg, "%s\r\nERROR\r\n%s", cmd, res);
+  sprintf(msg, "%s\r\nERROR\r\n%s", cmd, result);
   display(msg);
   HAL_Delay(5000);
+}
+
+// send command to SIM800L, check response
+static bool sim800check(char* cmd, char* expectedResult)
+{
+  char* res = sim800(cmd);
+  if (!strcmp(res, expectedResult))
+    return true;
+
+  displaySim800error(cmd, res);
   return false;
 }
 
@@ -168,16 +188,32 @@ static void sim800info()
 
 static bool sim800connect()
 {
-  // Set Command Echo Mode OFF
-  sim800("ATE0");
+  // initial configuration - set parameters and save - run once for new SIM800L
+  /*
+  sim800("ATE0"); // Set Command Echo Mode OFF
+  sim800("ATV0"); // Set TA Response Format - result codes
+  sim800("AT&W"); // Save
+  */
+
+
+
+  // sim800("AT");
+  if (!sim800check("AT", "0\r\n")) return false;
   // Set APN 
-  if (!sim800check("AT+CSTT=\"TM\"", "\r\nOK\r\n", true)) return false;
+  if (!sim800check("AT+CSTT=\"TM\"", "0\r\n")) return false;
   // Bring up wireless connection with GPRS or CSD
-  if (!sim800check("AT+CIICR", "\r\nOK\r\n", true)) return false;
+  if (!sim800check("AT+CIICR", "0\r\n")) return false;
   // Get local IP address
-  if (!sim800check("AT+CIFSR", "\r\nERROR\r\n", false)) return false;
+
+  char* res = sim800("AT+CIFSR"); // if no error - response start from "\r\n", then ip address
+  if (strncmp(res, "\r\n", 2))
+  {
+    displaySim800error("AT+CIFSR", res);
+    return false;    
+  }
+  
   // Start Up TCP Connection
-  if (!sim800check("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300", "\r\nOK\r\n", true)) return false;
+  if (!sim800check("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300", "0\r\n")) return false;
   return true; 
 }
 
@@ -194,13 +230,12 @@ static bool sim800send(char* msg)
   return false;
 }
 
-static bool sim800disconnect()
+static void sim800disconnect()
 {
-  // Close TCP Connection
-  if (!sim800check("AT+CIPCLOSE", "\r\nCLOSE OK\r\n", true)) return false;
+  // Close TCP Connection - ignore error
+  sim800check("AT+CIPCLOSE", "\r\nCLOSE OK\r\n");
   // Deactivate GPRS PDP Context
-  if (!sim800check("AT+CIPSHUT", "\r\nSHUT OK\r\n", true)) return false;
-  return true;
+  sim800check("AT+CIPSHUT", "\r\nSHUT OK\r\n");
 }
 
 /* USER CODE END 0 */
@@ -280,12 +315,7 @@ int main(void)
       }
       
    	  display("Disconnect");
-      if (sim800disconnect())
-      {
-     	  display("Disconnect OK");
-      } else {
-        display("Disconnect ERROR");
-      }
+      sim800disconnect();
       sendTelemetry = false;
     }
     
@@ -629,14 +659,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
   if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_RESET) 
   {
     if(++cntKeyPress == 5) {
-      // key pressed for 250 ms - switch ON onboard blue LED
-      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+      // key pressed for 250 ms - display battery voltage
+      displayBatteryVoltage();
 
       // displayScroll();
     } else if (cntKeyPress == 20)
     {
-      // key pressed for 1 sec - switch OFF onboard blue LED and send telemetry
-      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+      // key pressed for 1 sec - switch ON onboard blue LED and send telemetry
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
       sendTelemetry = true;
     }
   } else {
@@ -658,7 +688,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
   // Vin measured on A1 - 6k8/10k
   float vin = adc_raw[0] * 0.001358;
   // Vbat
-  float vbat = adc_raw[1] * 0.00339;
+  vbat = adc_raw[1] * 0.00339;
 
   if (vin > 4.5 && vbat < 4.0)
   {
