@@ -281,16 +281,20 @@ int main(void)
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_UART_Receive_DMA(&huart1, uart1RX, sizeof(uart1RX));
-
-  /*
-   HAL_Delay(10000); // wait for SIM800L
-  */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+    // test
+    display("AT");
+    if (sim800check("AT", "0\r\n")) {
+      display("OK");
+    }
+    HAL_Delay(1000);
+
     if (sendTelemetry)
     {
       display("Sending Telemetry");
