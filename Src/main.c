@@ -60,7 +60,9 @@ float vbat; // battery voltage
 uint8_t uart1RX[1]; // mavlink
 uint8_t uart2RX[64]; // SIM800l
 uint8_t uart2TX[64]; // SIM800l
-uint8_t sim800msg[64]; // SIM800l
+uint8_t sim800command[64];
+uint8_t sim800response[64];
+bool sim800responseFlag;
 
 mavlink_system_t mavlink_system = {
 	1, 	 // System ID (1-255)
@@ -143,12 +145,31 @@ static void displayScroll()
 // send command to SIM800L, return response
 static char* sim800(char* cmd)
 {
+  uint32_t timeout = 1000;
+	strcpy((char*)sim800command, cmd);
 	strcpy((char*)uart2TX, cmd);
 	strcpy((char*)uart2TX + strlen(cmd), "\n\r");
 	HAL_UART_Transmit(&huart2, uart2TX, strlen((char*)uart2TX), 200);
-	// memset(uart2RX, 0x00, sizeof(uart2RX));
-	// HAL_UART_Receive(&huart2, uart2RX, sizeof(uart2RX), 1000);
-	return (char*) uart2RX;
+
+  uint32_t tickstart = HAL_GetTick();
+  while (HAL_GetTick() - tickstart < timeout)
+  {
+    if (sim800responseFlag)
+    {
+      sim800responseFlag = false;
+
+      /* compare response with command */
+      uint16_t size = strlen(sim800command);
+      if (!strncmp(sim800command, sim800response, size) && sim800response[size] == '\r')
+      {
+        // display(sim800response);
+        return sim800response + size + 1;
+      }      
+    }
+  }
+
+  // timeout
+  return "timeout";  
 }
 
 static bool displaySim800error(char* cmd, char* result)
@@ -198,6 +219,21 @@ static bool sim800connect()
   */
 
 
+/*
+  display("ATE1");
+  sim800("ATE1"); // Set Command Echo Mode ON
+  HAL_Delay(1000);
+  
+  display("ATV0");
+  sim800("ATV0"); // Set TA Response Format - result codes
+  HAL_Delay(1000);
+
+  display("AT&W");
+  sim800("AT&W"); // Save
+  HAL_Delay(1000);
+
+  return false;
+*/
 
   // sim800("AT");
   if (!sim800check("AT", "0\r\n")) return false;
@@ -298,8 +334,12 @@ int main(void)
   while (1)
   {
 
+    // sim800connect();
+
     // test
-    sim800("AT");
+    display("AT");
+    char* res = sim800("AT");
+    display(res);
     HAL_Delay(1000);
 
 /*
@@ -759,27 +799,24 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   } else if (huart->Instance == huart2.Instance)
   {
     /* SIM800L */
-    char text[80];
-
-    if (uart2RX[cnt] == '\n' && uart2RX[cnt-1] == '\r')
+    if (cnt > 0 && uart2RX[cnt] == '\n' && uart2RX[cnt-1] == '\r')
     {
       // string received
-      memset(sim800msg, 0x00, sizeof(sim800msg));
-      memcpy(sim800msg, uart2RX, cnt-1);
-
-      // sprintf(text, "uart2RX STR = %s", uart2RX);
-      display(sim800msg);
-    }
-
-    if (cnt++ == sizeof(uart2RX))
+      memset(sim800response, 0x00, sizeof(sim800response));
+      memcpy(sim800response, uart2RX, cnt-1);
+      // sim800response[cnt] = 0;
+      sim800responseFlag = true;
+      memset(uart2RX, 0x00, sizeof(uart2RX));
+      cnt = 0;
+    } else if (++cnt == sizeof(uart2RX))
     {
       // uart2RX buffer full
       memset(uart2RX, 0x00, sizeof(uart2RX));
       cnt = 0;
     }
-    HAL_UART_Receive_DMA(&huart2, uart2RX + cnt, 1);
+    HAL_UART_Receive_DMA(&huart2, uart2RX+cnt, 1);
   }
-}
+} 
 /* USER CODE END 4 */
 
 /**
