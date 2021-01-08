@@ -58,8 +58,9 @@ DMA_HandleTypeDef hdma_usart2_rx;
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
 float vbat; // battery voltage
 uint8_t uart1RX[1]; // mavlink
-uint8_t Tx2Data[64]; // SIM800l
-uint8_t Rx2Data[64]; // SIM800l
+uint8_t uart2RX[64]; // SIM800l
+uint8_t uart2TX[64]; // SIM800l
+uint8_t sim800msg[64]; // SIM800l
 
 mavlink_system_t mavlink_system = {
 	1, 	 // System ID (1-255)
@@ -142,12 +143,12 @@ static void displayScroll()
 // send command to SIM800L, return response
 static char* sim800(char* cmd)
 {
-	strcpy((char*)Tx2Data, cmd);
-	strcpy((char*)Tx2Data + strlen(cmd), "\n\r");
-	HAL_UART_Transmit(&huart2, Tx2Data, strlen((char*)Tx2Data), 200);
-	memset(Rx2Data, 0x00, sizeof(Rx2Data));
-	HAL_UART_Receive(&huart2, Rx2Data, sizeof(Rx2Data), 1000);
-	return (char*) Rx2Data;
+	strcpy((char*)uart2TX, cmd);
+	strcpy((char*)uart2TX + strlen(cmd), "\n\r");
+	HAL_UART_Transmit(&huart2, uart2TX, strlen((char*)uart2TX), 200);
+	// memset(uart2RX, 0x00, sizeof(uart2RX));
+	// HAL_UART_Receive(&huart2, uart2RX, sizeof(uart2RX), 1000);
+	return (char*) uart2RX;
 }
 
 static bool displaySim800error(char* cmd, char* result)
@@ -280,8 +281,16 @@ int main(void)
   SSD1306_Init();
   display("Hello STM32");
 
+
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_UART_Receive_DMA(&huart1, uart1RX, sizeof(uart1RX));
+  HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
+
+  // test
+  // HAL_Delay(1000);
+  // display("AT");
+  // sim800("AT");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -290,11 +299,16 @@ int main(void)
   {
 
     // test
+    sim800("AT");
+    HAL_Delay(1000);
+
+/*
     display("AT");
     if (sim800check("AT", "0\r\n")) {
       display("OK");
     }
     HAL_Delay(1000);
+*/
 
     if (sendTelemetry)
     {
@@ -318,12 +332,12 @@ int main(void)
         display("Connect ERROR");
         HAL_Delay(1000);
       }
-      
+
    	  display("Disconnect");
       sim800disconnect();
       sendTelemetry = false;
     }
-    
+
     /*
     // blink onboard blue LED
     HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
@@ -688,7 +702,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
     cntADC = 0;
     // every 5 sec start ADC in DMA mode
     HAL_ADC_Start_DMA(&hadc1, adc_raw, 2);
-  }  
+  }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
@@ -711,33 +725,60 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
  }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(mavlink_parse_char(MAVLINK_COMM_0, uart1RX[0], &msg, &status))
-	{
-		if (msg.msgid == 0)
-      return;
-
-		if (msg.msgid == MAVLINK_MSG_ID_ATTITUDE) { // msgid == 30
-			mavlink_attitude_t attitude;
-			mavlink_msg_attitude_decode(&msg, &attitude);
-
-			uint8_t text[80];
-			sprintf((char *)&text, "yaw= %.2f\npitch= %.2f\nroll= %.2f", attitude.yaw, attitude.pitch, attitude.roll);
-			// display((char *)&text);
-      return;
-		}
-
-    if (msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT)
+{  
+  static uint16_t cnt;
+  if (huart->Instance == huart1.Instance)
+  {
+    /* mavlink */
+    if(mavlink_parse_char(MAVLINK_COMM_0, uart1RX[0], &msg, &status))
     {
-      mavlink_global_position_int_t global_position_int;
-      mavlink_msg_global_position_int_decode(&msg, &global_position_int);
+      if (msg.msgid == 0)
+        return;
 
-			uint8_t text[80];
-			sprintf((char *)&text, "lat= %ld\nlon= %ld\nalt= %ld", global_position_int.lat, global_position_int.lon, global_position_int.alt);
+      if (msg.msgid == MAVLINK_MSG_ID_ATTITUDE) { // msgid == 30
+        mavlink_attitude_t attitude;
+        mavlink_msg_attitude_decode(&msg, &attitude);
 
-      return;
+        uint8_t text[80];
+        sprintf((char *)&text, "yaw= %.2f\npitch= %.2f\nroll= %.2f", attitude.yaw, attitude.pitch, attitude.roll);
+        // display((char *)&text);
+        return;
+      }
+
+      if (msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT)
+      {
+        mavlink_global_position_int_t global_position_int;
+        mavlink_msg_global_position_int_decode(&msg, &global_position_int);
+
+        uint8_t text[80];
+        sprintf((char *)&text, "lat= %ld\nlon= %ld\nalt= %ld", global_position_int.lat, global_position_int.lon, global_position_int.alt);
+
+        return;
+      }
     }
-	}
+  } else if (huart->Instance == huart2.Instance)
+  {
+    /* SIM800L */
+    char text[80];
+
+    if (uart2RX[cnt] == '\n' && uart2RX[cnt-1] == '\r')
+    {
+      // string received
+      memset(sim800msg, 0x00, sizeof(sim800msg));
+      memcpy(sim800msg, uart2RX, cnt-1);
+
+      // sprintf(text, "uart2RX STR = %s", uart2RX);
+      display(sim800msg);
+    }
+
+    if (cnt++ == sizeof(uart2RX))
+    {
+      // uart2RX buffer full
+      memset(uart2RX, 0x00, sizeof(uart2RX));
+      cnt = 0;
+    }
+    HAL_UART_Receive_DMA(&huart2, uart2RX + cnt, 1);
+  }
 }
 /* USER CODE END 4 */
 
