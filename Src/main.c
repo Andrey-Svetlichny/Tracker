@@ -55,14 +55,22 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
+#define SIM800_MAX_COMMAND_LEN 255 ///< Maximum command length
+#define SIM800_MAX_RESPONSE_LEN 255 ///< Maximum response length
+
+typedef struct {
+	uint8_t command_len;            ///< Length of command
+	uint8_t command[SIM800_MAX_COMMAND_LEN]; ///< command
+	uint8_t response_len;            ///< Length of response
+	uint8_t response[SIM800_MAX_RESPONSE_LEN]; ///< response
+  bool response_received;
+} sim800_t;
+
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
 float vbat; // battery voltage
 uint8_t uart1RX[1]; // mavlink
-uint8_t uart2RX[64]; // SIM800l
-uint8_t uart2TX[64]; // SIM800l
-uint8_t sim800command[64];
-uint8_t sim800response[64];
-bool sim800responseFlag;
+uint8_t uart2RX[1]; // SIM800l
+sim800_t sim800_data;
 
 mavlink_system_t mavlink_system = {
 	1, 	 // System ID (1-255)
@@ -93,14 +101,6 @@ static void MX_I2C1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// switch onboard blue LED on and off
-static void LED_Blink(uint32_t Hdelay, uint32_t Ldelay)
-{
-	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
-	HAL_Delay(Hdelay - 1);
-	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
-	HAL_Delay(Ldelay - 1);
-}
 
 // show message on OLED display
 static void display(char *str)
@@ -118,6 +118,105 @@ static void display(char *str)
 	}
 	SSD1306_UpdateScreen();
 }
+
+static bool displaySim800error(char* cmd, char* result)
+{
+  char msg[80];
+  sprintf(msg, "%s\r\nERROR\r\n%s", cmd, result);
+  display(msg);
+  HAL_Delay(5000);
+}
+
+static void sim800_response_clear(sim800_t *p)
+{
+    memset(p->response, 0x00, SIM800_MAX_RESPONSE_LEN);
+    p->response_len = 0;
+}
+
+static void sim800_parse_response(sim800_t *p)
+{
+  // compare response with command
+  uint16_t size = p->command_len;
+  if (!strncmp((char*)p->command, (char*)p->response, size) && p->response[p->response_len] == '\r')
+  {
+    // display(p->response);
+    // uint8_t result = p->response + size + 1;
+    // response match command
+    p->response_received = true;
+  } else {
+    display("not match");
+  }
+}
+
+
+// send command to SIM800L, return response
+static char* sim800(char* cmd)
+{
+  sim800_t *p = &sim800_data;
+  uint32_t timeout = 1000;
+  p->command_len = strlen(cmd);
+  if (p->command_len + 2 > SIM800_MAX_COMMAND_LEN)
+  {
+    return "cmd too long";
+  }
+  
+	strcpy((char*)p->command, cmd);
+	strcpy((char*)p->command + p->command_len, "\n\r");
+	HAL_UART_Transmit(&huart2, p->command, p->command_len + 2, 200);
+
+  uint32_t tickstart = HAL_GetTick();
+  while (HAL_GetTick() - tickstart < timeout)
+  {
+    if (p->response_received)
+    {
+      p->response_received = false;
+      // verify result
+      display((char*)p->response);
+
+    }
+  }
+
+  // timeout
+  return "timeout";  
+}
+
+
+static void sim800_parse_char(uint8_t c, sim800_t *p)
+{
+  p->response[p->response_len] = c;
+  if (p->response_len > 0 && p->response[p->response_len] == '\n' && p->response[p->response_len-1] == '\r')
+  {
+    // string received
+    sim800_parse_response(p);
+  }
+  else if (++p->response_len == SIM800_MAX_RESPONSE_LEN) 
+  {
+    // response buffer full
+    sim800_response_clear(p);
+  }
+}
+
+static bool sim800check(char* cmd, char* expectedResult)
+{
+  char* res = sim800(cmd);
+  if (!strcmp(res, expectedResult))
+    return true;
+
+  displaySim800error(cmd, res);
+  return false;
+}
+
+
+/*
+// switch onboard blue LED on and off
+static void LED_Blink(uint32_t Hdelay, uint32_t Ldelay)
+{
+	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+	HAL_Delay(Hdelay - 1);
+	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+	HAL_Delay(Ldelay - 1);
+}
+*/
 
 static void displayBatteryVoltage() {
 	uint8_t text[20];
@@ -141,55 +240,6 @@ static void displayScroll()
   SSD1306_Scrolldiagright(0x0F, 0x0F);
 }
 */
-
-// send command to SIM800L, return response
-static char* sim800(char* cmd)
-{
-  uint32_t timeout = 1000;
-	strcpy((char*)sim800command, cmd);
-	strcpy((char*)uart2TX, cmd);
-	strcpy((char*)uart2TX + strlen(cmd), "\n\r");
-	HAL_UART_Transmit(&huart2, uart2TX, strlen((char*)uart2TX), 200);
-
-  uint32_t tickstart = HAL_GetTick();
-  while (HAL_GetTick() - tickstart < timeout)
-  {
-    if (sim800responseFlag)
-    {
-      sim800responseFlag = false;
-
-      /* compare response with command */
-      uint16_t size = strlen(sim800command);
-      if (!strncmp(sim800command, sim800response, size) && sim800response[size] == '\r')
-      {
-        // display(sim800response);
-        return sim800response + size + 1;
-      }      
-    }
-  }
-
-  // timeout
-  return "timeout";  
-}
-
-static bool displaySim800error(char* cmd, char* result)
-{
-  char msg[80];
-  sprintf(msg, "%s\r\nERROR\r\n%s", cmd, result);
-  display(msg);
-  HAL_Delay(5000);
-}
-
-// send command to SIM800L, check response
-static bool sim800check(char* cmd, char* expectedResult)
-{
-  char* res = sim800(cmd);
-  if (!strcmp(res, expectedResult))
-    return true;
-
-  displaySim800error(cmd, res);
-  return false;
-}
 
 /*
 static char* sim800display(char* cmd)
@@ -340,7 +390,7 @@ int main(void)
     display("AT");
     char* res = sim800("AT");
     display(res);
-    HAL_Delay(1000);
+    HAL_Delay(100);
 
 /*
     display("AT");
@@ -766,7 +816,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {  
-  static uint16_t cnt;
   if (huart->Instance == huart1.Instance)
   {
     /* mavlink */
@@ -799,22 +848,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   } else if (huart->Instance == huart2.Instance)
   {
     /* SIM800L */
-    if (cnt > 0 && uart2RX[cnt] == '\n' && uart2RX[cnt-1] == '\r')
-    {
-      // string received
-      memset(sim800response, 0x00, sizeof(sim800response));
-      memcpy(sim800response, uart2RX, cnt-1);
-      // sim800response[cnt] = 0;
-      sim800responseFlag = true;
-      memset(uart2RX, 0x00, sizeof(uart2RX));
-      cnt = 0;
-    } else if (++cnt == sizeof(uart2RX))
-    {
-      // uart2RX buffer full
-      memset(uart2RX, 0x00, sizeof(uart2RX));
-      cnt = 0;
-    }
-    HAL_UART_Receive_DMA(&huart2, uart2RX+cnt, 1);
+    sim800_parse_char(uart2RX[0], &sim800_data);
   }
 } 
 /* USER CODE END 4 */
