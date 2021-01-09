@@ -23,8 +23,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "mavlink_v2/standard/mavlink.h"
-#include "ssd1306/ssd1306.h"
-#include "ssd1306/fonts.h"
+#include "display.h"
+#include "display.c"
+#include "sim800.h"
+#include "sim800.c"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,17 +57,6 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
-#define SIM800_MAX_COMMAND_LEN 255 ///< Maximum command length
-#define SIM800_MAX_RESPONSE_LEN 255 ///< Maximum response length
-
-typedef struct {
-	uint8_t command_len;            ///< Length of command
-	uint8_t command[SIM800_MAX_COMMAND_LEN]; ///< command
-	uint8_t response_len;            ///< Length of response
-	uint8_t response[SIM800_MAX_RESPONSE_LEN]; ///< response
-  bool response_received;
-} sim800_t;
-
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
 float vbat; // battery voltage
 uint8_t uart1RX[1]; // mavlink
@@ -102,98 +93,14 @@ static void MX_I2C1_Init(void);
 /* USER CODE BEGIN 0 */
 
 
-// show message on OLED display
-static void display(char *str)
-{
-	char delim[] = "\r\n";
-	char *ptr = strtok(str, delim);
-	SSD1306_Clear();
-	u_int16_t y = 0;
-	while (ptr!=NULL)
-	{
-		SSD1306_GotoXY(0, y);
-		SSD1306_Puts(ptr, &Font_7x10, 1);
-		ptr = strtok(NULL, delim);
-		y += 12;
-	}
-	SSD1306_UpdateScreen();
+
+static void sim800_transmit(char* cmd) {
+	HAL_UART_Transmit(&huart2, (uint8_t*)cmd, strlen(cmd), 200);
 }
 
-static bool displaySim800error(char* cmd, char* result)
-{
-  char msg[80];
-  sprintf(msg, "%s\r\nERROR\r\n%s", cmd, result);
-  display(msg);
-  HAL_Delay(5000);
-}
-
-static void sim800_response_clear(sim800_t *p)
-{
-    memset(p->response, 0x00, SIM800_MAX_RESPONSE_LEN);
-    p->response_len = 0;
-}
-
-static void sim800_parse_response(sim800_t *p)
-{
-  // compare response with command
-  uint16_t size = p->command_len;
-  if (!strncmp((char*)p->command, (char*)p->response, size) && p->response[p->response_len] == '\r')
-  {
-    // display(p->response);
-    // uint8_t result = p->response + size + 1;
-    // response match command
-    p->response_received = true;
-  } else {
-    display("not match");
-  }
-}
-
-
-// send command to SIM800L, return response
 static char* sim800(char* cmd)
 {
-  sim800_t *p = &sim800_data;
-  uint32_t timeout = 1000;
-  p->command_len = strlen(cmd);
-  if (p->command_len + 2 > SIM800_MAX_COMMAND_LEN)
-  {
-    return "cmd too long";
-  }
-  
-	strcpy((char*)p->command, cmd);
-	strcpy((char*)p->command + p->command_len, "\n\r");
-	HAL_UART_Transmit(&huart2, p->command, p->command_len + 2, 200);
-
-  uint32_t tickstart = HAL_GetTick();
-  while (HAL_GetTick() - tickstart < timeout)
-  {
-    if (p->response_received)
-    {
-      p->response_received = false;
-      // verify result
-      display((char*)p->response);
-
-    }
-  }
-
-  // timeout
-  return "timeout";  
-}
-
-
-static void sim800_parse_char(uint8_t c, sim800_t *p)
-{
-  p->response[p->response_len] = c;
-  if (p->response_len > 0 && p->response[p->response_len] == '\n' && p->response[p->response_len-1] == '\r')
-  {
-    // string received
-    sim800_parse_response(p);
-  }
-  else if (++p->response_len == SIM800_MAX_RESPONSE_LEN) 
-  {
-    // response buffer full
-    sim800_response_clear(p);
-  }
+  return sim800_cmd(cmd, &sim800_data, &sim800_transmit);
 }
 
 static bool sim800check(char* cmd, char* expectedResult)
@@ -217,22 +124,6 @@ static void LED_Blink(uint32_t Hdelay, uint32_t Ldelay)
 	HAL_Delay(Ldelay - 1);
 }
 */
-
-static void displayBatteryVoltage() {
-	uint8_t text[20];
-	sprintf((char *)&text, "%.2fV", vbat);
-	SSD1306_Clear();
-	SSD1306_GotoXY(22, 12);
-	SSD1306_Puts((char *)&text, &Font_16x26, 1);
-	SSD1306_UpdateScreen();
-	if (vbat < 3.5)
-	{
-		sprintf((char *)&text, "LOW BATTERY");
-		SSD1306_GotoXY(0, 40);
-		SSD1306_Puts((char *)&text, &Font_11x18, 1);
-		SSD1306_UpdateScreen();
-	}
-}
 
 /*
 static void displayScroll()
@@ -390,7 +281,7 @@ int main(void)
     display("AT");
     char* res = sim800("AT");
     display(res);
-    HAL_Delay(100);
+    HAL_Delay(1000);
 
 /*
     display("AT");
@@ -773,7 +664,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
   {
     if(++cntKeyPress == 5) {
       // key pressed for 250 ms - display battery voltage
-      displayBatteryVoltage();
+      displayBatteryVoltage(vbat);
 
       // displayScroll();
     } else if (cntKeyPress == 20)
