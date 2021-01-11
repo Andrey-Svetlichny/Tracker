@@ -260,7 +260,7 @@ int main(void)
 
 
   HAL_TIM_Base_Start_IT(&htim3);
-  HAL_UART_Receive_DMA(&huart1, uart1RX, sizeof(uart1RX));
+  HAL_UART_Receive_DMA(&huart1, uart1RX, 1);
   HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
 
   // test
@@ -742,6 +742,19 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     sim800_parse_char(uart2RX[0], &sim800_data);
   }
 } 
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+  display("UART_Error");
+  if (huart->Instance == huart1.Instance)
+  {
+    HAL_UART_Receive_DMA(&huart1, uart1RX, 1);
+  }
+  if (huart->Instance == huart2.Instance)
+  {
+    HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
+  }
+}
 /* USER CODE END 4 */
 
 /**
