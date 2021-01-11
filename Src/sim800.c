@@ -23,14 +23,17 @@ static void sim800_parse_response(sim800_t *p)
 {
   // compare response with command
   uint16_t size = p->command_len;
-  if (!strncmp((char*)p->command, (char*)p->response, size) && p->response[p->response_len] == '\r')
+  int b1 = strncmp((char*)p->command, (char*)p->response, size);
+  bool b2 = p->response[size] == '\r';
+  if (!b1 && b2)
   {
-    // display(p->response);
     // uint8_t result = p->response + size + 1;
     // response match command
     p->response_received = true;
   } else {
-    display("not match");
+    // not match
+    // display("not match");
+    sim800_response_clear(p);
   }
 }
 
@@ -56,7 +59,8 @@ static char* sim800_cmd(char* cmd, sim800_t *p, void (*transmit)())
     {
       p->response_received = false;
       // verify result
-      display((char*)p->response);
+      // display((char*)p->response);
+      return p->response;
     }
   }
 

@@ -279,6 +279,7 @@ int main(void)
 
     // test
     display("AT");
+    sim800_response_clear(&sim800_data);
     char* res = sim800("AT");
     display(res);
     HAL_Delay(1000);
