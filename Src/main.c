@@ -98,11 +98,16 @@ static void sim800_transmit(char* cmd) {
 	HAL_UART_Transmit(&huart2, (uint8_t*)cmd, strlen(cmd), 200);
 }
 
-static char* sim800(char* cmd)
+static bool sim800(char* cmd)
 {
-  return sim800_cmd(cmd, &sim800_data, &sim800_transmit);
+  bool res = sim800_cmd(cmd, &sim800_data, &sim800_transmit);
+  if(res) {
+    displaySim800error(cmd, (char*)sim800_data.response);
+  }
+  return res;
 }
 
+/*
 static bool sim800check(char* cmd, char* expectedResult)
 {
   char* res = sim800(cmd);
@@ -112,7 +117,7 @@ static bool sim800check(char* cmd, char* expectedResult)
   displaySim800error(cmd, res);
   return false;
 }
-
+*/
 
 /*
 // switch onboard blue LED on and off
@@ -177,22 +182,24 @@ static bool sim800connect()
 */
 
   // sim800("AT");
-  if (!sim800check("AT", "0\r\n")) return false;
+  if (sim800("AT")) return false;
   // Set APN 
-  if (!sim800check("AT+CSTT=\"TM\"", "0\r\n")) return false;
+  if (sim800("AT+CSTT=\"TM\"")) return false;
   // Bring up wireless connection with GPRS or CSD
-  if (!sim800check("AT+CIICR", "0\r\n")) return false;
+  if (sim800("AT+CIICR")) return false;
   // Get local IP address
 
+/*
   char* res = sim800("AT+CIFSR"); // if no error - response start from "\r\n", then ip address
   if (strncmp(res, "\r\n", 2))
   {
     displaySim800error("AT+CIFSR", res);
     return false;    
   }
-  
+*/
+
   // Start Up TCP Connection
-  if (!sim800check("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300", "0\r\n")) return false;
+  if (sim800("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300")) return false;
   return true; 
 }
 
@@ -200,21 +207,31 @@ static bool sim800send(char* msg)
 {
   char cmd[22];
   sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
-  char* res = sim800(cmd);
-  if (!strcmp(res, "\r\r\n> "))
+  if (sim800(cmd))
   {
-    res = sim800(msg);
-    return (!strcmp(res, "\r\nSEND OK\r\n"));
+    return false;
+  }
+  
+  if (!strcmp((char*)sim800_data.result_data, "\r\r\n> "))
+  {
+    if (sim800(msg))
+    {
+      return false;
+    }
+    
+    return (!strcmp((char*)sim800_data.result_data, "\r\nSEND OK\r\n"));
   }
   return false;
 }
 
 static void sim800disconnect()
 {
+  /*
   // Close TCP Connection - ignore error
   sim800check("AT+CIPCLOSE", "\r\nCLOSE OK\r\n");
   // Deactivate GPRS PDP Context
   sim800check("AT+CIPSHUT", "\r\nSHUT OK\r\n");
+  */
 }
 
 /* USER CODE END 0 */
@@ -280,8 +297,13 @@ int main(void)
     // test
     display("AT");
     sim800_response_clear(&sim800_data);
-    char* res = sim800("AT");
-    display(res);
+    if (sim800("AT"))
+    {
+      display("timeout");
+    } else {
+      display((char*)sim800_data.response);
+    }
+    
     HAL_Delay(1000);
 
 /*
@@ -740,7 +762,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   } else if (huart->Instance == huart2.Instance)
   {
     /* SIM800L */
-    sim800_parse_char(uart2RX[0], &sim800_data);
+    if (sim800_parse_char(uart2RX[0], &sim800_data))
+    {
+      sim800_response_match_command(&sim800_data);
+    }
   }
 } 
 
