@@ -22,7 +22,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #include "mavlink_v2/standard/mavlink.h"
+#pragma GCC diagnostic pop
 #include "display.h"
 #include "display.c"
 #include "sim800.h"
@@ -101,7 +104,7 @@ static void sim800_transmit(char* cmd) {
 static bool sim800(char* cmd)
 {
   bool res = sim800_cmd(cmd, &sim800_data, &sim800_transmit);
-  if(res) {
+  if(!res) {
     displaySim800error(cmd, (char*)sim800_data.response);
   }
   return res;
@@ -158,13 +161,6 @@ static void sim800info()
 static bool sim800connect()
 {
   // initial configuration - set parameters and save - run once for new SIM800L
-  /*
-  sim800("ATE0"); // Set Command Echo Mode OFF
-  sim800("ATV0"); // Set TA Response Format - result codes
-  sim800("AT&W"); // Save
-  */
-
-
 /*
   display("ATE1");
   sim800("ATE1"); // Set Command Echo Mode ON
@@ -181,12 +177,14 @@ static bool sim800connect()
   return false;
 */
 
-  // sim800("AT");
-  if (sim800("AT")) return false;
+  // Check if SIM800 ok?
+  if (!sim800("AT")) return false;
+
+  // if (!sim800("AT+CGATT?")) return false;
   // Set APN 
-  if (sim800("AT+CSTT=\"TM\"")) return false;
+  if (!sim800("AT+CSTT=\"TM\"")) return false;
   // Bring up wireless connection with GPRS or CSD
-  if (sim800("AT+CIICR")) return false;
+  if (!sim800("AT+CIICR")) return false;
   // Get local IP address
 
 /*
@@ -199,7 +197,7 @@ static bool sim800connect()
 */
 
   // Start Up TCP Connection
-  if (sim800("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300")) return false;
+  if (!sim800("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300")) return false;
   return true; 
 }
 
@@ -280,11 +278,6 @@ int main(void)
   HAL_UART_Receive_DMA(&huart1, uart1RX, 1);
   HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
 
-  // test
-  // HAL_Delay(1000);
-  // display("AT");
-  // sim800("AT");
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -292,27 +285,16 @@ int main(void)
   while (1)
   {
 
-    // sim800connect();
-
     // test
-    display("AT");
-    sim800_response_clear(&sim800_data);
-    if (sim800("AT"))
-    {
-      display("timeout");
-    } else {
-      display((char*)sim800_data.response);
-    }
-    
-    HAL_Delay(1000);
+    // display("AT");
+    // if (sim800("AT"))
+    // {
+    //   display("OK");
+    // } else {
+    //   display("timeout");
+    // }
+    // HAL_Delay(1000);
 
-/*
-    display("AT");
-    if (sim800check("AT", "0\r\n")) {
-      display("OK");
-    }
-    HAL_Delay(1000);
-*/
 
     if (sendTelemetry)
     {
@@ -717,7 +699,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
   // Vbat
   vbat = adc_raw[1] * 0.00339;
 
-  if (vin > 4.5 && vbat < 4.0)
+  if (vin > 4.5 && vbat < 4.1)
   {
     // charge battery
     HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_RESET);
@@ -764,7 +746,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     /* SIM800L */
     if (sim800_parse_char(uart2RX[0], &sim800_data))
     {
-      sim800_response_match_command(&sim800_data);
+      // response received
     }
   }
 } 
