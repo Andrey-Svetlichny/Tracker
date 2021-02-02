@@ -187,8 +187,11 @@ static bool sim800connect()
   if (!sim800("AT+CIICR")) return false;
   // Get local IP address
 
+
+  bool res = sim800_cmd("AT+CIFSR", &sim800_data, &sim800_transmit); // if no error - response start from "\r\n", then ip address
+
 /*
-  char* res = sim800("AT+CIFSR"); // if no error - response start from "\r\n", then ip address
+  char* res = sim800("AT+CIFSR"); 
   if (strncmp(res, "\r\n", 2))
   {
     displaySim800error("AT+CIFSR", res);
@@ -224,12 +227,10 @@ static bool sim800send(char* msg)
 
 static void sim800disconnect()
 {
-  /*
   // Close TCP Connection - ignore error
-  sim800check("AT+CIPCLOSE", "\r\nCLOSE OK\r\n");
+  sim800("AT+CIPCLOSE");
   // Deactivate GPRS PDP Context
-  sim800check("AT+CIPSHUT", "\r\nSHUT OK\r\n");
-  */
+  sim800("AT+CIPSHUT");
 }
 
 /* USER CODE END 0 */
@@ -310,7 +311,7 @@ int main(void)
         {
           display("Send OK");
           HAL_Delay(1000);
-    } else {
+        } else {
           display("Send ERROR");
           HAL_Delay(1000);
         }
