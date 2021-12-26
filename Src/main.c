@@ -754,13 +754,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-  display("UART_Error");
   if (huart->Instance == huart1.Instance)
   {
+    display("UART1 (mavlink) Error");
     HAL_UART_Receive_DMA(&huart1, uart1RX, 1);
   }
   if (huart->Instance == huart2.Instance)
   {
+    display("UART2 (SIM800) Error");
     HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
   }
 }
