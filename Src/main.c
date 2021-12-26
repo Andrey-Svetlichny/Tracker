@@ -62,17 +62,8 @@ DMA_HandleTypeDef hdma_usart2_rx;
 /* USER CODE BEGIN PV */
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
 float vbat; // battery voltage
-uint8_t uart1RX[1]; // mavlink
 uint8_t uart2RX[1]; // SIM800l
 sim800_t sim800_data;
-
-mavlink_system_t mavlink_system = {
-	1, 	 // System ID (1-255)
-	158    // Component ID (a MAV_COMPONENT value)
-};
-
-mavlink_status_t status;
-mavlink_message_t msg;
 
 bool sendTelemetry;
 
@@ -110,73 +101,9 @@ static bool sim800(char* cmd)
   return res;
 }
 
-/*
-static bool sim800check(char* cmd, char* expectedResult)
-{
-  char* res = sim800(cmd);
-  if (!strcmp(res, expectedResult))
-    return true;
-
-  displaySim800error(cmd, res);
-  return false;
-}
-*/
-
-/*
-// switch onboard blue LED on and off
-static void LED_Blink(uint32_t Hdelay, uint32_t Ldelay)
-{
-	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
-	HAL_Delay(Hdelay - 1);
-	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
-	HAL_Delay(Ldelay - 1);
-}
-*/
-
-/*
-static void displayScroll()
-{
-  SSD1306_Scrolldiagright(0x0F, 0x0F);
-}
-*/
-
-/*
-static char* sim800display(char* cmd)
-{
-	display(cmd);
-  char* res = sim800(cmd);
-	display(res);
-	LED_Blink(5, 100);
-	HAL_Delay(1000);
-}
-
-static void sim800info()
-{
-  sim800display("ATI");    // Display Product Identification Information
-	sim800display("AT+CSQ"); // Signal Quality Report
-	sim800display("AT+CGATT?");  // Attach or Detach from GPRS Service - Check if the MS is connected to the GPRS network 
-}
-*/
 
 static bool sim800connect()
 {
-  // initial configuration - set parameters and save - run once for new SIM800L
-/*
-  display("ATE1");
-  sim800("ATE1"); // Set Command Echo Mode ON
-  HAL_Delay(1000);
-  
-  display("ATV0");
-  sim800("ATV0"); // Set TA Response Format - result codes
-  HAL_Delay(1000);
-
-  display("AT&W");
-  sim800("AT&W"); // Save
-  HAL_Delay(1000);
-
-  return false;
-*/
-
   // Check if SIM800 ok?
   if (!sim800("AT")) return false;
 
@@ -189,15 +116,6 @@ static bool sim800connect()
 
 
   bool res = sim800_cmd("AT+CIFSR", &sim800_data, &sim800_transmit); // if no error - response start from "\r\n", then ip address
-
-/*
-  char* res = sim800("AT+CIFSR"); 
-  if (strncmp(res, "\r\n", 2))
-  {
-    displaySim800error("AT+CIFSR", res);
-    return false;    
-  }
-*/
 
   // Start Up TCP Connection
   if (!sim800("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300")) return false;
@@ -276,7 +194,6 @@ int main(void)
 
 
   HAL_TIM_Base_Start_IT(&htim3);
-  HAL_UART_Receive_DMA(&huart1, uart1RX, 1);
   HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
 
   /* USER CODE END 2 */
@@ -285,17 +202,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-    // test
-    // display("AT");
-    // if (sim800("AT"))
-    // {
-    //   display("OK");
-    // } else {
-    //   display("timeout");
-    // }
-    // HAL_Delay(1000);
-
 
     if (sendTelemetry)
     {
@@ -683,13 +589,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
     cntKeyPress = 0;
     HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   }
-  
-  if (++cntADC == 100)
-  {
-    cntADC = 0;
-    // every 5 sec start ADC in DMA mode
-    HAL_ADC_Start_DMA(&hadc1, adc_raw, 2);
-  }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
@@ -713,36 +612,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {  
-  if (huart->Instance == huart1.Instance)
-  {
-    /* mavlink */
-    if(mavlink_parse_char(MAVLINK_COMM_0, uart1RX[0], &msg, &status))
-    {
-      if (msg.msgid == 0)
-        return;
-
-      if (msg.msgid == MAVLINK_MSG_ID_ATTITUDE) { // msgid == 30
-        mavlink_attitude_t attitude;
-        mavlink_msg_attitude_decode(&msg, &attitude);
-
-        uint8_t text[80];
-        sprintf((char *)&text, "yaw= %.2f\npitch= %.2f\nroll= %.2f", attitude.yaw, attitude.pitch, attitude.roll);
-        // display((char *)&text);
-        return;
-      }
-
-      if (msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT)
-      {
-        mavlink_global_position_int_t global_position_int;
-        mavlink_msg_global_position_int_decode(&msg, &global_position_int);
-
-        uint8_t text[80];
-        sprintf((char *)&text, "lat= %ld\nlon= %ld\nalt= %ld", global_position_int.lat, global_position_int.lon, global_position_int.alt);
-
-        return;
-      }
-    }
-  } else if (huart->Instance == huart2.Instance)
+  if (huart->Instance == huart2.Instance)
   {
     /* SIM800L */
     if (sim800_parse_char(uart2RX[0], &sim800_data))
@@ -754,11 +624,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-  if (huart->Instance == huart1.Instance)
-  {
-    display("UART1 (mavlink) Error");
-    HAL_UART_Receive_DMA(&huart1, uart1RX, 1);
-  }
   if (huart->Instance == huart2.Instance)
   {
     display("UART2 (SIM800) Error");
