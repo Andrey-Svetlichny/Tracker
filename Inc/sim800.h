@@ -12,7 +12,7 @@ typedef struct {
 } sim800_t;
 
 static bool sim800_cmd(char* cmd, sim800_t *p, void (*transmit)());
-static bool sim800_response_match_command(sim800_t *p);
+static bool sim800_response_received(sim800_t *p);
 static bool sim800_parse_char(uint8_t c, sim800_t *p);
 static void sim800_response_clear(sim800_t *p);
 */

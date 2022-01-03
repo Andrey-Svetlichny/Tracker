@@ -61,12 +61,11 @@ DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
-float vbat; // battery voltage
-uint8_t uart2RX[1]; // SIM800l
+float vbat;          // battery voltage
+uint8_t uart2RX[1];  // SIM800l
 sim800_t sim800_data;
 
 bool sendTelemetry;
-
 
 /* USER CODE END PV */
 
@@ -86,63 +85,64 @@ static void MX_I2C1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-
-
-static void sim800_transmit(char* cmd) {
-	HAL_UART_Transmit(&huart2, (uint8_t*)cmd, strlen(cmd), 200);
+static void sim800_transmit(char *cmd)
+{
+  HAL_UART_Transmit(&huart2, (uint8_t *)cmd, strlen(cmd), 200);
 }
 
-static bool sim800(char* cmd)
+static bool sim800(char *cmd)
 {
   bool res = sim800_cmd(cmd, &sim800_data, &sim800_transmit);
-  if(!res) {
-    displaySim800error(cmd, (char*)sim800_data.response);
+  if (res)
+  {
+    displaySim800error(cmd, (char *)sim800_data.response);
   }
   return res;
 }
 
-
 static bool sim800connect()
 {
   // Check if SIM800 ok?
-  if (!sim800("AT")) return false;
+  if (sim800("AT"))
+    return false;
 
-  // if (!sim800("AT+CGATT?")) return false;
-  // Set APN 
-  if (!sim800("AT+CSTT=\"TM\"")) return false;
+  // Set APN
+  if (sim800("AT+CSTT=\"TM\""))
+    return false;
+
   // Bring up wireless connection with GPRS or CSD
-  if (!sim800("AT+CIICR")) return false;
-  // Get local IP address
+  if (sim800("AT+CIICR"))
+    return false;
 
-
-  bool res = sim800_cmd("AT+CIFSR", &sim800_data, &sim800_transmit); // if no error - response start from "\r\n", then ip address
+  // Get local IP address, ignore result
+  sim800("AT+CIFSR");
+  HAL_Delay(1000);
 
   // Start Up TCP Connection
-  if (!sim800("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300")) return false;
-  return true; 
+  if (sim800("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300"))
+    return false;
+  return true;
 }
 
-static bool sim800send(char* msg)
+static bool sim800send(char *msg)
 {
   char cmd[22];
   sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
-  if (!sim800(cmd))
-  {
+  if (sim800(cmd))
     return false;
-  }
-  
-  if (!sim800(msg))
-  {
+
+  HAL_Delay(1000);
+  if (sim800(msg))
     return false;
-  }
-  
-  return (!strcmp((char*)sim800_data.result_data, "\r\nSEND OK\r\n"));
+
+  return true;
 }
 
 static void sim800disconnect()
 {
   // Close TCP Connection - ignore error
   sim800("AT+CIPCLOSE");
+  HAL_Delay(1000);
   // Deactivate GPRS PDP Context
   sim800("AT+CIPSHUT");
 }
@@ -188,7 +188,6 @@ int main(void)
   SSD1306_Init();
   display("Hello STM32");
 
-
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
 
@@ -213,16 +212,20 @@ int main(void)
         {
           display("Send OK");
           HAL_Delay(1000);
-        } else {
+        }
+        else
+        {
           display("Send ERROR");
           HAL_Delay(1000);
         }
-      } else {
+      }
+      else
+      {
         display("Connect ERROR");
         HAL_Delay(1000);
       }
 
-   	  display("Disconnect");
+      display("Disconnect");
       sim800disconnect();
       sendTelemetry = false;
     }
@@ -276,8 +279,7 @@ void SystemClock_Config(void)
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -344,7 +346,6 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
@@ -378,7 +379,6 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
@@ -423,7 +423,6 @@ static void MX_TIM3_Init(void)
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
-
 }
 
 /**
@@ -456,7 +455,6 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
-
 }
 
 /**
@@ -489,7 +487,6 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
-
 }
 
 /**
@@ -512,7 +509,6 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-
 }
 
 /**
@@ -534,7 +530,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, BAT_CHARGE_Pin|GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, BAT_CHARGE_Pin | GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_BLUE_Pin */
   GPIO_InitStruct.Pin = LED_BLUE_Pin;
@@ -562,44 +558,48 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
 }
 
 /* USER CODE BEGIN 4 */
 // every 50 ms - timer3
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  static int cntADC = 0;
   static int cntKeyPress = 0;
   static int cntHeartBit = 0;
 
-  if(++cntHeartBit == 10) {
+  if (++cntHeartBit == 10)
+  {
     cntHeartBit = 0;
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
   }
   // blink onboard blue LED
   // HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
 
-  if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_RESET) 
+  if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_RESET)
   {
-    if(++cntKeyPress == 5) {
+    if (++cntKeyPress == 5)
+    {
       // key pressed for 250 ms - display battery voltage
       displayBatteryVoltage(vbat);
 
       // displayScroll();
-    } else if (cntKeyPress == 20)
+    }
+    else if (cntKeyPress == 20)
     {
       // key pressed for 1 sec - switch ON onboard blue LED and send telemetry
       HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
       sendTelemetry = true;
     }
-  } else {
+  }
+  else
+  {
     cntKeyPress = 0;
     HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   }
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
   // stop ADC
   HAL_ADC_Stop_DMA(hadc);
   // Vin measured on A1 - 6k8/10k
@@ -616,19 +616,16 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
   {
     HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_SET);
   }
- }
+}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{  
+{
   if (huart->Instance == huart2.Instance)
   {
     /* SIM800L */
-    if (sim800_parse_char(uart2RX[0], &sim800_data))
-    {
-      // response received
-    }
+    sim800_parse_char(uart2RX[0], &sim800_data);
   }
-} 
+}
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
@@ -655,7 +652,7 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
