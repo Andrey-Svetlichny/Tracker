@@ -85,66 +85,14 @@ static void MX_I2C1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static void sim800_transmit(char *cmd)
+void sim800_transmit(char *cmd)
 {
   HAL_UART_Transmit(&huart2, (uint8_t *)cmd, strlen(cmd), 200);
 }
 
-static bool sim800(char *cmd)
+void sim800_onError(sim800_t *sim800_data)
 {
-  bool res = sim800_cmd(cmd, &sim800_data, &sim800_transmit);
-  if (res)
-  {
-    displaySim800error(cmd, (char *)sim800_data.response);
-  }
-  return res;
-}
-
-static bool sim800connect()
-{
-  // Check if SIM800 ok?
-  if (sim800("AT"))
-    return false;
-
-  // Set APN
-  if (sim800("AT+CSTT=\"TM\""))
-    return false;
-
-  // Bring up wireless connection with GPRS or CSD
-  if (sim800("AT+CIICR"))
-    return false;
-
-  // Get local IP address, ignore result
-  sim800("AT+CIFSR");
-  HAL_Delay(1000);
-
-  // Start Up TCP Connection
-  if (sim800("AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300"))
-    return false;
-  return true;
-}
-
-static bool sim800send(char *msg)
-{
-  char cmd[22];
-  sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
-  if (sim800(cmd))
-    return false;
-
-  HAL_Delay(1000);
-  if (sim800(msg))
-    return false;
-
-  return true;
-}
-
-static void sim800disconnect()
-{
-  // Close TCP Connection - ignore error
-  sim800("AT+CIPCLOSE");
-  HAL_Delay(1000);
-  // Deactivate GPRS PDP Context
-  sim800("AT+CIPSHUT");
+  displaySim800error((char *)sim800_data->command, (char *)sim800_data->response);
 }
 
 /* USER CODE END 0 */
@@ -156,6 +104,9 @@ static void sim800disconnect()
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+  sim800_data.transmit = sim800_transmit;
+  sim800_data.onError = sim800_onError;
 
   /* USER CODE END 1 */
 
@@ -203,12 +154,12 @@ int main(void)
       display("Sending Telemetry");
       HAL_Delay(500);
 
-      if (sim800connect())
+      if (sim800_connect(&sim800_data))
       {
         display("Connect OK");
         HAL_Delay(1000);
         display("Send");
-        if (sim800send("Hello from SIM800"))
+        if (sim800send(&sim800_data, "Hello from SIM800"))
         {
           display("Send OK");
           HAL_Delay(1000);
@@ -226,7 +177,7 @@ int main(void)
       }
 
       display("Disconnect");
-      sim800disconnect();
+      sim800disconnect(&sim800_data);
       sendTelemetry = false;
     }
 
