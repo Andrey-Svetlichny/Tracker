@@ -1,15 +1,14 @@
-#include "ssd1306/ssd1306.h"
-#include "ssd1306/fonts.h"
-#include "main.h"
+#include <stdio.h>
+#include "display.h"
 
 // show message on OLED display
-static void display(char *str)
+void display(char *str)
 {
 	char delim[] = "\r\n";
 	char *ptr = strtok(str, delim);
 	SSD1306_Clear();
-	u_int16_t y = 0;
-	while (ptr!=NULL)
+	uint16_t y = 0;
+	while (ptr != NULL)
 	{
 		SSD1306_GotoXY(0, y);
 		SSD1306_Puts(ptr, &Font_7x10, 1);
@@ -19,15 +18,16 @@ static void display(char *str)
 	SSD1306_UpdateScreen();
 }
 
-static void displaySim800error(char* cmd, char* result)
+void displaySim800error(char *cmd, char *result)
 {
-  char msg[80];
-  sprintf(msg, "%s\r\nERROR\r\n%s", cmd, result);
-  display(msg);
-  HAL_Delay(5000);
+	char msg[80];
+	sprintf(msg, "%s\r\nERROR\r\n%s", cmd, result);
+	display(msg);
+	HAL_Delay(5000);
 }
 
-static void displayBatteryVoltage(float vbat) {
+void displayBatteryVoltage(float vbat)
+{
 	uint8_t text[20];
 	sprintf((char *)&text, "%.2fV", vbat);
 	SSD1306_Clear();

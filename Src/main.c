@@ -27,9 +27,7 @@
 #include "mavlink_v2/standard/mavlink.h"
 #pragma GCC diagnostic pop
 #include "display.h"
-#include "display.c"
 #include "sim800.h"
-#include "sim800.c"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -159,7 +157,7 @@ int main(void)
         display("Connect OK");
         HAL_Delay(1000);
         display("Send");
-        if (sim800send(&sim800_data, "Hello from SIM800"))
+        if (sim800_send(&sim800_data, "Hello from SIM800"))
         {
           display("Send OK");
           HAL_Delay(1000);
@@ -177,7 +175,7 @@ int main(void)
       }
 
       display("Disconnect");
-      sim800disconnect(&sim800_data);
+      sim800_disconnect(&sim800_data);
       sendTelemetry = false;
     }
 
@@ -574,7 +572,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == huart2.Instance)
   {
     /* SIM800L */
-    sim800_parse_char(uart2RX[0], &sim800_data);
+    sim800_response_char(uart2RX[0], &sim800_data);
   }
 }
 

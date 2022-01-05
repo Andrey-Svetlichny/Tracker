@@ -61,7 +61,9 @@ Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c \
 Src/ssd1306/ssd1306.c \
-Src/ssd1306/fonts.c
+Src/ssd1306/fonts.c \
+Src/display.c \
+Src/sim800.c
 
 # ASM sources
 ASM_SOURCES =  \
