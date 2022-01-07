@@ -513,6 +513,7 @@ static void MX_GPIO_Init(void)
 // every 50 ms - timer3
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+  static int cntADC = 0;
   static int cntKeyPress = 0;
   static int cntHeartBit = 0;
 
@@ -544,6 +545,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
     cntKeyPress = 0;
     HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+  }
+
+  if (++cntADC == 100)
+  {
+    cntADC = 0;
+    // every 5 sec start ADC in DMA mode
+    HAL_ADC_Start_DMA(&hadc1, adc_raw, 2);
   }
 }
 
