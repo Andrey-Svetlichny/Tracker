@@ -560,9 +560,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   // stop ADC
   HAL_ADC_Stop_DMA(hadc);
   // Vin measured on A1 - 6k8/10k
-  float vin = adc_raw[0] * 0.001358;
-  // Vbat
-  vbat = adc_raw[1] * 0.00339;
+  float vin = 0.164 + adc_raw[0] * 0.0013;
+  // Vbat - lowest possible measurement - 3.35V with Vin; 3.65 without Vin
+  vbat = (vin > 4.5 ? 0.135 : 0.164) + 0.0033 * adc_raw[1];
 
   if (vin > 4.5 && vbat < 4.1)
   {
