@@ -14,17 +14,6 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L myLib:BlackPill U?
-U 1 1 5FBB3C61
-P 5000 3550
-F 0 "U?" H 5000 4765 50  0001 C CNN
-F 1 "STM32F401 BlackPill" H 5000 4674 50  0000 C CNN
-F 2 "" H 5100 4650 50  0001 C CNN
-F 3 "" H 5100 4650 50  0001 C CNN
-	1    5000 3550
-	1    0    0    -1  
-$EndComp
-$Comp
 L myLib:SIM800L U?
 U 1 1 5FBB5448
 P 7100 3750
@@ -62,43 +51,24 @@ F 3 "~" H 6300 4650 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4150 4400 4550 4400
+	3850 4400 4550 4400
 Wire Wire Line
-	4250 3700 4250 4300
+	3950 3700 3950 4200
 Wire Wire Line
-	4250 4300 4550 4300
+	3950 4300 4550 4300
 Wire Wire Line
-	4150 3800 4150 4400
+	3850 3800 3850 4400
+Connection ~ 3950 3700
 Wire Wire Line
-	4050 3700 4250 3700
+	3850 3400 3850 3800
+Connection ~ 3850 3800
 Wire Wire Line
-	4550 4000 4050 4000
-Wire Wire Line
-	4050 3900 4550 3900
-Wire Wire Line
-	4050 3800 4150 3800
-$Comp
-L myLib:OLED_SSD1306 U?
-U 1 1 5FBCCE2D
-P 3650 3850
-F 0 "U?" H 3650 3500 50  0001 C CNN
-F 1 "OLED_SSD1306" H 3650 3450 50  0000 C CNN
-F 2 "" H 3650 4250 50  0001 C CNN
-F 3 "" H 3650 4250 50  0001 C CNN
-	1    3650 3850
-	1    0    0    -1  
-$EndComp
-Connection ~ 4250 3700
-Wire Wire Line
-	4150 3400 4150 3800
-Connection ~ 4150 3800
-Wire Wire Line
-	4150 4400 4150 4800
-Connection ~ 4150 4400
+	3850 4400 3850 4800
+Connection ~ 3850 4400
 Wire Wire Line
 	5450 3700 6150 3700
 Wire Wire Line
-	4250 3600 4250 3700
+	3950 3600 3950 3700
 $Comp
 L Device:Battery_Cell BT?
 U 1 1 5FBD92D9
@@ -111,7 +81,7 @@ F 3 "~" V 5750 4760 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4150 4800 5600 4800
+	3850 4800 5600 4800
 Connection ~ 5750 4500
 Wire Wire Line
 	5750 4500 5450 4500
@@ -169,9 +139,9 @@ F 3 "~" H 5600 4250 50  0001 C CNN
 	1    5600 4250
 	1    0    0    -1  
 $EndComp
-Text Notes 4250 3200 0    50   ~ 0
+Text Notes 4150 3200 0    50   ~ 0
 UART1 TX
-Text Notes 4250 3100 0    50   ~ 0
+Text Notes 4150 3100 0    50   ~ 0
 UART1 RX\n
 Wire Wire Line
 	5600 2700 5600 2600
@@ -182,13 +152,13 @@ Wire Wire Line
 	5600 3000 5600 3900
 Wire Wire Line
 	5750 4500 6300 4500
-Text Notes 3700 3100 0    50   ~ 0
+Text Notes 3400 3100 0    50   ~ 0
 TX
-Text Notes 3700 3200 0    50   ~ 0
+Text Notes 3400 3200 0    50   ~ 0
 RX
-Text Notes 3700 3300 0    50   ~ 0
+Text Notes 3400 3300 0    50   ~ 0
 5V
-Text Notes 3700 3400 0    50   ~ 0
+Text Notes 3400 3400 0    50   ~ 0
 G
 Connection ~ 6350 2600
 Wire Wire Line
@@ -244,38 +214,19 @@ Wire Wire Line
 Wire Wire Line
 	6000 3100 6050 3100
 Connection ~ 6000 3100
-Text Notes 5400 3800 0    50   ~ 0
+Text Notes 5500 3800 0    50   ~ 0
 UART2 TX
-Text Notes 5400 3700 0    50   ~ 0
+Text Notes 5500 3700 0    50   ~ 0
 UART2 RX\n
-Wire Wire Line
-	4050 3400 4150 3400
-Wire Wire Line
-	4050 3300 4250 3300
-Wire Wire Line
-	4550 3200 4050 3200
-Wire Wire Line
-	4050 3100 4550 3100
-$Comp
-L Connector:Conn_01x04_Male J?
-U 1 1 5FBCF7C1
-P 3850 3200
-F 0 "J?" H 3950 3550 50  0001 C CNN
-F 1 "FC UART" H 3950 3450 50  0000 C CNN
-F 2 "" H 3850 3200 50  0001 C CNN
-F 3 "~" H 3850 3200 50  0001 C CNN
-	1    3850 3200
-	1    0    0    -1  
-$EndComp
 $Comp
 L Device:D D?
 U 1 1 5FC14E46
-P 4250 3450
-F 0 "D?" V 4350 3400 50  0001 R CNN
-F 1 "1N5819" V 4250 3400 50  0000 R CNN
-F 2 "" H 4250 3450 50  0001 C CNN
-F 3 "~" H 4250 3450 50  0001 C CNN
-	1    4250 3450
+P 3950 3450
+F 0 "D?" V 4050 3400 50  0001 R CNN
+F 1 "1N5819" V 3950 3400 50  0000 R CNN
+F 2 "" H 3950 3450 50  0001 C CNN
+F 3 "~" H 3950 3450 50  0001 C CNN
+	1    3950 3450
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -287,6 +238,80 @@ F 1 "10" H 6476 3450 50  0000 C CNN
 F 2 "" V 6280 3450 50  0001 C CNN
 F 3 "~" H 6350 3450 50  0001 C CNN
 	1    6350 3450
+	1    0    0    -1  
+$EndComp
+$Comp
+L myLib:OLED_SSD1306 U?
+U 1 1 5FBCCE2D
+P 3350 3850
+F 0 "U?" H 3350 3500 50  0001 C CNN
+F 1 "OLED_SSD1306" H 3350 3450 50  0000 C CNN
+F 2 "" H 3350 4250 50  0001 C CNN
+F 3 "" H 3350 4250 50  0001 C CNN
+	1    3350 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3750 3800 3850 3800
+Wire Wire Line
+	3750 3900 4550 3900
+Wire Wire Line
+	4550 4000 3750 4000
+Wire Wire Line
+	3750 3700 3950 3700
+Wire Wire Line
+	3750 3400 3850 3400
+Wire Wire Line
+	3750 3300 3950 3300
+Wire Wire Line
+	4550 3200 3750 3200
+Wire Wire Line
+	3750 3100 4550 3100
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 5FBCF7C1
+P 3550 3200
+F 0 "J?" H 3650 3550 50  0001 C CNN
+F 1 "FC UART" H 3650 3450 50  0000 C CNN
+F 2 "" H 3550 3200 50  0001 C CNN
+F 3 "~" H 3550 3200 50  0001 C CNN
+	1    3550 3200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 61E34BAE
+P 4400 4200
+F 0 "R?" H 4250 4150 50  0001 C CNN
+F 1 "10k" V 4250 4200 50  0000 C CNN
+F 2 "" V 4330 4200 50  0001 C CNN
+F 3 "~" H 4400 4200 50  0001 C CNN
+	1    4400 4200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:LED D?
+U 1 1 61E372F0
+P 4100 4200
+F 0 "D?" H 3950 4050 50  0001 C CNN
+F 1 "LED" H 4100 4350 50  0000 C CNN
+F 2 "" H 4100 4200 50  0001 C CNN
+F 3 "~" H 4100 4200 50  0001 C CNN
+	1    4100 4200
+	-1   0    0    1   
+$EndComp
+Connection ~ 3950 4200
+Wire Wire Line
+	3950 4200 3950 4300
+$Comp
+L myLib:BlackPill U?
+U 1 1 5FBB3C61
+P 5000 3550
+F 0 "U?" H 5000 4765 50  0001 C CNN
+F 1 "STM32F401 BlackPill" H 5000 4674 50  0000 C CNN
+F 2 "" H 5100 4650 50  0001 C CNN
+F 3 "" H 5100 4650 50  0001 C CNN
+	1    5000 3550
 	1    0    0    -1  
 $EndComp
 $EndSCHEMATC
