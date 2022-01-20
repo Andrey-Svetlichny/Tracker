@@ -28,6 +28,7 @@
 #pragma GCC diagnostic pop
 #include "display.h"
 #include "sim800.h"
+#include "queue.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,6 +65,9 @@ uint8_t uart2RX[1];  // SIM800l
 sim800_t sim800_data;
 
 bool sendTelemetry;
+QUEUE_DECLARATION(led_queue, uint8_t, 4);
+QUEUE_DEFINITION(led_queue, uint8_t);
+struct led_queue q;
 
 /* USER CODE END PV */
 
@@ -105,6 +109,7 @@ int main(void)
 
   sim800_data.transmit = sim800_transmit;
   sim800_data.onError = sim800_onError;
+  led_queue_init(&q);
 
   /* USER CODE END 1 */
 
@@ -136,6 +141,21 @@ int main(void)
   HAL_Delay(50); // wait at least 20ms for SSD1306
   SSD1306_Init();
   display("Hello STM32");
+
+  uint8_t i;
+  i = 15;
+  led_queue_enqueue(&q, &i);
+
+  i = 1;
+  led_queue_enqueue(&q, &i);
+
+  i = 2;
+  led_queue_enqueue(&q, &i);
+
+  i = 4;
+  led_queue_enqueue(&q, &i);
+
+  // i = 0;
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
@@ -515,13 +535,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   static int cntADC = 0;
   static int cntKeyPress = 0;
-  static int cntHeartBit = 0;
+  // static int cntHeartBeat = 0;
+  static int cntLedBeat = 0;
 
-  if (++cntHeartBit == 10)
+  if (++cntLedBeat == 10)
   {
-    cntHeartBit = 0;
-    HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
+    cntLedBeat = 0;
+    uint8_t x;
+    enum dequeue_result r = led_queue_dequeue(&q, &x);
+    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+
+    HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, x & 1);
+    HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, x & 2);
+    HAL_GPIO_WritePin(LED_B_GPIO_Port, LED_B_Pin, x & 4);
   }
+
+  // if (++cntHeartBeat == 10)
+  // {
+  //   cntHeartBeat = 0;
+  //   HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
+  // }
+
   // blink onboard blue LED
   // HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
 
