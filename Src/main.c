@@ -479,7 +479,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, BAT_CHARGE_Pin | GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, BAT_CHARGE_Pin | LED_B_Pin | LED_G_Pin | LED_R_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_BLUE_Pin */
   GPIO_InitStruct.Pin = LED_BLUE_Pin;
@@ -501,8 +501,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BAT_CHARGE_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  /*Configure GPIO pins : LED_B_Pin LED_G_Pin LED_R_Pin */
+  GPIO_InitStruct.Pin = LED_B_Pin | LED_G_Pin | LED_R_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -520,7 +520,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (++cntHeartBit == 10)
   {
     cntHeartBit = 0;
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
+    HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
   }
   // blink onboard blue LED
   // HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
