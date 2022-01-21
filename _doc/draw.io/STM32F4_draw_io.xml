@@ -1,0 +1,110 @@
+<shape name="STM32F4" h="400" w="140" aspect="fixed" strokewidth="inherit">
+  <connections>
+    <constraint x="0.0714" y="0.025" perimeter="0" />
+  </connections>
+  <foreground>
+    <fillstroke />
+    <rect x="0" y="0" w="140" h="400" />
+    <stroke />
+	
+    <ellipse x="5" y="5" w="10" h="10" /><stroke />
+	<text str="B12" x="20" y="10" valign="middle" align-shape="1"/>
+
+    <ellipse x="5" y="25" w="10" h="10" /><stroke />
+	<text str="B13" x="20" y="30" valign="middle" align-shape="1"/>
+	
+    <ellipse x="5" y="45" w="10" h="10" /><stroke />
+	<text str="B14" x="20" y="50" valign="middle" align-shape="1"/>
+	
+    <ellipse x="5" y="65" w="10" h="10" /><stroke />
+	
+    <ellipse x="5" y="85" w="10" h="10" /><stroke />
+	
+    <ellipse x="5" y="105" w="10" h="10" /><stroke />
+	<text str="A9" x="20" y="110" valign="middle" align-shape="1"/>
+	
+    <ellipse x="5" y="125" w="10" h="10" /><stroke />
+	<text str="A10" x="20" y="130" valign="middle" align-shape="1"/>
+
+    <ellipse x="5" y="145" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="165" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="185" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="205" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="225" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="245" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="265" w="10" h="10" /><stroke />
+	<text str="B6" x="20" y="270" valign="middle" align-shape="1"/>
+
+    <ellipse x="5" y="285" w="10" h="10" /><stroke />
+	<text str="B7" x="20" y="290" valign="middle" align-shape="1"/>
+
+    <ellipse x="5" y="305" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="325" w="10" h="10" /><stroke />
+
+    <ellipse x="5" y="345" w="10" h="10" /><stroke />
+	<text str="5V" x="20" y="350" valign="middle" align-shape="1"/>
+
+    <ellipse x="5" y="365" w="10" h="10" /><stroke />
+	<text str="G" x="20" y="370" valign="middle" align-shape="1"/>
+
+    <ellipse x="5" y="385" w="10" h="10" /><stroke />
+	<text str="3V3" x="20" y="390" valign="middle" align-shape="1"/>
+
+
+    <ellipse x="125" y="5" w="10" h="10" /><stroke />
+	<text str="5V" x="120" y="10" align="right" valign="middle" align-shape="1"/>	
+
+    <ellipse x="125" y="25" w="10" h="10" /><stroke />
+	<text str="G" x="120" y="30" align="right" valign="middle" align-shape="1"/>	
+	
+    <ellipse x="125" y="45" w="10" h="10" /><stroke />
+	<text str="3V3" x="120" y="50" align="right" valign="middle" align-shape="1"/>	
+	
+    <ellipse x="125" y="65" w="10" h="10" /><stroke />
+	
+    <ellipse x="125" y="85" w="10" h="10" /><stroke />
+	
+    <ellipse x="125" y="105" w="10" h="10" /><stroke />
+	<text str="B1" x="120" y="110" align="right" valign="middle" align-shape="1"/>	
+	
+    <ellipse x="125" y="125" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="145" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="165" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="185" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="205" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="225" w="10" h="10" /><stroke />
+	<text str="A3" x="120" y="230" align="right" valign="middle" align-shape="1"/>	
+
+    <ellipse x="125" y="245" w="10" h="10" /><stroke />
+	<text str="A2" x="120" y="250" align="right" valign="middle" align-shape="1"/>	
+
+    <ellipse x="125" y="265" w="10" h="10" /><stroke />
+	<text str="A1" x="120" y="270" align="right" valign="middle" align-shape="1"/>	
+
+    <ellipse x="125" y="285" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="305" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="325" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="345" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="365" w="10" h="10" /><stroke />
+
+    <ellipse x="125" y="385" w="10" h="10" /><stroke />
+	<text str="VB" x="120" y="390" align="right" valign="middle" align-shape="1"/>	
+	
+  </foreground>
+</shape>
