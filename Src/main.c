@@ -591,7 +591,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     led_low_battery();
   }
 
-  if (vin > 4.5 && vbat < 4.1)
+  if (vin > 4.1 && vbat < 4.1)
   {
     // charge battery
     HAL_GPIO_WritePin(BAT_CHARGE_GPIO_Port, BAT_CHARGE_Pin, GPIO_PIN_RESET);
