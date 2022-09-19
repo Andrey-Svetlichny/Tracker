@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-#include "mavlink_v2/standard/mavlink.h"
+#include "../lib/mavlink_v2/standard/mavlink.h"
 #pragma GCC diagnostic pop
 #include "display.h"
 #include "sim800.h"
