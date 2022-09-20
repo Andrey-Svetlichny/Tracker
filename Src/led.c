@@ -26,6 +26,7 @@ bool led_is_empty()
     return led_queue_is_empty(&led_queue);
 }
 
+// switch all ON, then only R, G, B
 void led_hello()
 {
     led(LED_RGB | LED_L);
@@ -34,6 +35,7 @@ void led_hello()
     led(LED_B);
 }
 
+// blink all 3 times
 void led_low_battery()
 {
     led(LED_RGB);

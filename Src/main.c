@@ -65,6 +65,7 @@ uint8_t uart2RX[1];  // SIM800l
 sim800_t sim800_data;
 
 bool sendTelemetry;
+bool sendingTelemetry;
 
 /* USER CODE END PV */
 
@@ -150,8 +151,9 @@ int main(void)
   while (1)
   {
 
-    if (sendTelemetry)
+    if (sendTelemetry && !sendingTelemetry)
     {
+      sendingTelemetry = true;
       display("Sending Telemetry");
       HAL_Delay(500);
 
@@ -179,7 +181,7 @@ int main(void)
 
       display("Disconnect");
       sim800_disconnect(&sim800_data);
-      sendTelemetry = false;
+      sendingTelemetry = false;
     }
 
     /*
@@ -566,6 +568,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   else
   {
     cntKeyPress = 0;
+    sendTelemetry = false;
     HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   }
 
