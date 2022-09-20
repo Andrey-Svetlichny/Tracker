@@ -1,3 +1,4 @@
+#include "display.h"
 #include "main.h"
 #include "sim800.h"
 
@@ -13,7 +14,7 @@ static void sim800_response_clear(sim800_t *p)
 // send command to SIM800L, return result_code (0 means OK)
 static uint8_t sim800_cmd(sim800_t *p, char *cmd, bool result_expected)
 {
-  uint32_t timeout = 1000;
+  uint32_t timeout = 10000;
   uint8_t len = strlen(cmd);
   if (len + 2 > SIM800_MAX_COMMAND_LEN)
   {
@@ -101,24 +102,46 @@ void sim800_response_char(uint8_t c, sim800_t *p)
 bool sim800_connect(sim800_t *p)
 {
   // Check if SIM800 ok?
+  display("AT");
+  HAL_Delay(500);
   if (sim800_cmd(p, "AT", true))
     return false;
+  display("AT OK");
+  HAL_Delay(1000);
 
   // Set APN
+  display("Set APN");
+  HAL_Delay(500);
   if (sim800_cmd(p, "AT+CSTT=\"TM\"", true))
     return false;
+  display("Set APN OK");
+  HAL_Delay(1000);
 
   // Bring up wireless connection with GPRS or CSD
+  display("GPRS");
+  HAL_Delay(500);
   if (sim800_cmd(p, "AT+CIICR", true))
     return false;
+  display("GPRS OK");
+  HAL_Delay(1000);
 
   // Get local IP address
+  display("Get IP");
+  HAL_Delay(500);
   sim800_cmd(p, "AT+CIFSR", false);
   HAL_Delay(1000);
 
   // Start Up TCP Connection
+  display("Connect TCP");
+  HAL_Delay(500);
   if (sim800_cmd(p, "AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300", true))
     return false;
+  display("Connect TCP OK");
+  HAL_Delay(1000);
+
+  // Query Current Connection Status
+  // "AT+CIPSTATUS"
+
   return true;
 }
 
