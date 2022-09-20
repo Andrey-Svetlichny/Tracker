@@ -33,3 +33,11 @@ https://sysprogs.com/getfile/1180/openocd-20200729.7z
 ```
 make flash
 ```
+
+
+# SIM800L initial configuration - set parameters and save - run once for new SIM800L
+/*
+ sim800("ATE0"); // Set Command Echo Mode OFF - don't use ?
+ sim800("ATV0"); // Set TA Response Format - result codes
+ sim800("AT&W"); // Save
+ */
