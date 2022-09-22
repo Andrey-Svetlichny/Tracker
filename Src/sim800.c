@@ -2,101 +2,131 @@
 #include "main.h"
 #include "sim800.h"
 
-static void sim800_response_clear(sim800_t *p)
+// send command to SIM800L, return: success
+static bool sim800_cmd(sim800_t *p, char *cmd, void (*responseParser)(sim800_t *self), uint32_t timeout)
 {
-  memset(p->response, 0x00, SIM800_MAX_RESPONSE_LEN);
-  p->response_len = 0;
-  p->response_match = false;
-  p->result_code = 0;
-  p->result_data = NULL;
-}
-
-// send command to SIM800L, return result_code (0 means OK)
-static uint8_t sim800_cmd(sim800_t *p, char *cmd, bool result_expected)
-{
-  uint32_t timeout = 10000;
   uint8_t len = strlen(cmd);
+
+  // validate cmd
+  if (p->executing)
+    return SIM800_RESULT_ANOTHER_EXECUTING;
+
   if (len + 2 > SIM800_MAX_COMMAND_LEN)
   {
-    // cmd too long
     strcpy((char *)p->response, "cmd too long\n\r");
     p->response_len = 14;
-    p->result_code = -3;
+    p->result = SIM800_RESULT_COMMAND_TOO_LONG;
     p->onError(p);
-    return p->result_code;
+    return p->result;
   }
 
-  sim800_response_clear(p);
+  // prepare p
   strcpy((char *)p->command, cmd);
   strcpy((char *)p->command + len, "\n\r");
-  p->result_expected = result_expected;
+  memset(p->response, 0x00, SIM800_MAX_RESPONSE_LEN);
+  p->response_len = 0;
+  p->result = SIM800_RESULT_NO_RESULT_YET;
+  p->resultData = NULL;
+  p->parse = responseParser;
+
+  // transmit
+  p->executing = true;
   p->transmit((char *)p->command);
 
+  // wait for result from p->validate
   uint32_t tickstart = HAL_GetTick();
   while (HAL_GetTick() - tickstart < timeout)
   {
-    if (p->response_match)
+    if (!p->executing && p->result != SIM800_RESULT_NO_RESULT_YET)
     {
-      if (p->result_code)
-      {
-        p->onError(p);
-      }
+      if (p->result == SIM800_RESULT_SUCCESS)
+        return true;
 
-      return p->result_code;
+      p->onError(p);
+      return false;
     }
   }
 
   // timeout
+  p->executing = false;
   strcpy((char *)p->response, "timeout\n\r");
   p->response_len = 9;
-  p->result_code = -1;
+  p->result = SIM800_RESULT_TIMEOUT;
   p->onError(p);
-  return p->result_code;
+  return false;
 }
 
-// if match, set response_match and fill result_code and result_data
-static void sim800_response_received(sim800_t *p)
+// next char received from UART
+void sim800_receiveChar(uint8_t c, sim800_t *p)
 {
-  uint16_t size = strlen((char *)p->command) - 2; // command length without "\n\r"
-
-  // compare response with command
-  if (strncmp((char *)p->command, (char *)p->response, size))
+  if (!p->executing)
   {
-    // not match
-    sim800_response_clear(p);
+    // ignore
     return;
   }
-  p->response_match = true;
 
-  if (!p->result_expected)
-    return;
-
-  // parse result_code & set result_data
-  if (p->response_len < size + 3)
-  {
-    p->result_code = -2; // response too short
-    return;
-  }
-  uint8_t *result = p->response + size + 1;
-  char *tmp;
-  p->result_code = strtol((char *)result, &tmp, 10);
-  p->result_data = (uint8_t *)tmp;
-}
-
-// parse next response char
-void sim800_response_char(uint8_t c, sim800_t *p)
-{
-  p->response[p->response_len] = c;
-  if (p->response_len > 0 && p->response[p->response_len] == '\n' && p->response[p->response_len - 1] == '\r')
-  {
-    // string received
-    sim800_response_received(p);
-  }
-  if (++p->response_len == SIM800_MAX_RESPONSE_LEN)
+  if (p->response_len == SIM800_MAX_RESPONSE_LEN)
   {
     // response buffer full
-    sim800_response_clear(p);
+    p->executing = false;
+    p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
   }
+
+  p->response[p->response_len++] = c;
+  if (p->response_len > 1 && p->response[p->response_len - 1] == '\n' && p->response[p->response_len - 2] == '\r')
+  {
+    // new line received, parse response
+    p->parse(p);
+  }
+}
+
+static void sim800_parse_ok(sim800_t *p)
+{
+  if (!strcmp("\r\nOK\r\n", (char *)p->response))
+  {
+    p->executing = false;
+    p->result = SIM800_RESULT_SUCCESS;
+    return;
+  }
+  if (!strcmp("\r\nERROR\r\n", (char *)p->response))
+  {
+    p->executing = false;
+    p->result = SIM800_RESULT_ERROR;
+    return;
+  }
+  if (strlen((char *)p->response) > 9)
+  {
+    p->executing = false;
+    p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
+    return;
+  }
+}
+
+static void sim800_parse_status(sim800_t *p)
+{
+  if (strlen((char *)p->response) < 15)
+    return;
+
+  if (strncmp("\r\nOK\r\n\r\nSTATE: ", (char *)p->response, 6))
+  {
+    p->executing = false;
+    p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
+    return;
+  }
+  p->executing = false;
+  p->resultData = p->response + 15;
+  p->result = SIM800_RESULT_SUCCESS;
+}
+
+static void sim800_showStatus(sim800_t *p)
+{
+  // Query Current Connection Status
+  display("AT+CIPSTATUS");
+  HAL_Delay(500);
+  if (!sim800_cmd(p, "AT+CIPSTATUS", sim800_parse_status, 1000))
+    return;
+  display((char *)p->resultData);
+  HAL_Delay(1000);
 }
 
 bool sim800_connect(sim800_t *p)
@@ -104,67 +134,74 @@ bool sim800_connect(sim800_t *p)
   // Check if SIM800 ok?
   display("AT");
   HAL_Delay(500);
-  if (sim800_cmd(p, "AT", true))
+  if (!sim800_cmd(p, "AT", sim800_parse_ok, 1000))
     return false;
   display("AT OK");
   HAL_Delay(1000);
 
-  // Set APN
+  sim800_showStatus(p);
+
+  // Set APN;
+  // IP INITIAL => IP START
   display("Set APN");
   HAL_Delay(500);
-  if (sim800_cmd(p, "AT+CSTT=\"TM\"", true))
+  if (!sim800_cmd(p, "AT+CSTT=\"TM\"", sim800_parse_ok, 1000))
     return false;
   display("Set APN OK");
   HAL_Delay(1000);
 
+  sim800_showStatus(p);
+
   // Bring up wireless connection with GPRS or CSD
+  // IP START => IP CONFIG => IP GPRSACT
   display("GPRS");
   HAL_Delay(500);
-  if (sim800_cmd(p, "AT+CIICR", true))
+  if (!sim800_cmd(p, "AT+CIICR", sim800_parse_ok, 10000))
     return false;
   display("GPRS OK");
   HAL_Delay(1000);
 
-  // Get local IP address
-  display("Get IP");
-  HAL_Delay(500);
-  sim800_cmd(p, "AT+CIFSR", false);
-  HAL_Delay(1000);
+  /*
+    // Get local IP address
+    display("Get IP");
+    HAL_Delay(500);
+    // expected for example 10.4.100.193 => IP STATUS
+    if (!sim800_cmd(p, "AT+CIFSR", sim800_parse_ok, 1000))
+      return false;
+    display("IP = ");
+    HAL_Delay(1000);
 
-  // Start Up TCP Connection
-  display("Connect TCP");
-  HAL_Delay(500);
-  if (sim800_cmd(p, "AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300", true))
-    return false;
-  display("Connect TCP OK");
-  HAL_Delay(1000);
-
-  // Query Current Connection Status
-  // "AT+CIPSTATUS"
-
+    // Start Up TCP Connection
+    display("Connect TCP");
+    HAL_Delay(500);
+    // expected "OK"
+    if (sim800_cmd(p, "AT+CIPSTART=\"TCP\",\"mail-verif.com\",20300", true))
+      return false;
+    display("Connect TCP OK");
+    HAL_Delay(1000);
+   */
   return true;
 }
 
 bool sim800_send(sim800_t *p, char *msg)
 {
-  char cmd[22];
-  sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
-  if (sim800_cmd(p, cmd, false))
-    return false;
+  // char cmd[22];
+  // sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
+  // expected ">"
+  // if (sim800_cmd(p, cmd, false))
+  //   return false;
 
-  HAL_Delay(1000);
-  if (sim800_cmd(p, msg, true))
-    return false;
+  // HAL_Delay(1000);
+  // expected "SEND OK"
+  // if (sim800_cmd(p, msg, true))
+  //   return false;
 
   return true;
 }
 
 void sim800_disconnect(sim800_t *p)
 {
-  // Close TCP Connection
-  sim800_cmd(p, "AT+CIPCLOSE", false);
-  HAL_Delay(1000);
-
-  // Deactivate GPRS PDP Context
-  sim800_cmd(p, "AT+CIPSHUT", false);
+  // Close TCP Connection adnd deactivate GPRS PDP Context
+  // expected "SHUT OK" => IP INITIAL
+  sim800_cmd(p, "AT+CIPSHUT", sim800_parse_ok, 10000);
 }

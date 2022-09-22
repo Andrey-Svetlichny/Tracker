@@ -161,17 +161,17 @@ int main(void)
       {
         display("Connect OK");
         HAL_Delay(1000);
-        display("Send");
-        if (sim800_send(&sim800_data, "Hello from SIM800"))
-        {
-          display("Send OK");
-          HAL_Delay(1000);
-        }
-        else
-        {
-          display("Send ERROR");
-          HAL_Delay(1000);
-        }
+        // display("Send");
+        // if (sim800_send(&sim800_data, "Hello from SIM800"))
+        // {
+        //   display("Send OK");
+        //   HAL_Delay(1000);
+        // }
+        // else
+        // {
+        //   display("Send ERROR");
+        //   HAL_Delay(1000);
+        // }
       }
       else
       {
@@ -610,7 +610,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == huart2.Instance)
   {
     /* SIM800L */
-    sim800_response_char(uart2RX[0], &sim800_data);
+    sim800_receiveChar(uart2RX[0], &sim800_data);
   }
 }
 

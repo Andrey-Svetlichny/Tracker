@@ -1,6 +1,5 @@
 # Tracker for FPV
 
-
 # How to setup build and debug tools youtube video from EmbeddedGeek
 
 STM32 toolchain for Windows - Part 1 (CubeMX, GCC, Make and OpenOCD)
@@ -12,6 +11,7 @@ https://www.youtube.com/watch?v=xaC5oWwzOt0&t=701s
 # downloads
 
 ## GNU Arm Embedded Toolchain
+
 https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
 gcc-arm-none-eabi-9-2020-q2-update-win32.zip
 
@@ -23,21 +23,27 @@ http://gnuwin32.sourceforge.net/downlinks/make-bin-zip.php
 Dependencies
 http://gnuwin32.sourceforge.net/downlinks/make-dep-zip.php
 
-## OpenOCD 
+## OpenOCD
 
 https://gnutoolchains.com/arm-eabi/openocd/
 https://sysprogs.com/getfile/1180/openocd-20200729.7z
 
+# set env
+
+ARMGCC_DIR: c:\Tools\gcc-arm-none-eabi-10.3-2021.10\bin\
+
 # Compile and run from [VS Code] terminal
+
+use Cortex-Debug 1.4.4 to avoid error "GDB major version should be >= 9, yours is 8"
 
 ```
 make flash
 ```
 
-
 # SIM800L initial configuration - set parameters and save - run once for new SIM800L
-/*
- sim800("ATE0"); // Set Command Echo Mode OFF - don't use ?
- sim800("ATV0"); // Set TA Response Format - result codes
- sim800("AT&W"); // Save
- */
+
+/_
+sim800("ATE0"); // Set Command Echo Mode OFF - don't use ?
+sim800("ATV0"); // Set TA Response Format - result codes
+sim800("AT&W"); // Save
+_/
