@@ -17,12 +17,12 @@
 typedef struct sim800_t sim800_t;
 typedef struct sim800_t
 {
-    uint8_t command[SIM800_MAX_COMMAND_LEN];   ///< command
-    bool executing;                            ///< command running
-    uint8_t response[SIM800_MAX_RESPONSE_LEN]; ///< response
-    uint8_t response_len;                      ///< length of response
-    uint8_t result;                            ///< command result - SIM800_RESULT_XXX
-    uint8_t *resultData;                       ///< response result data
+    char command[SIM800_MAX_COMMAND_LEN];   ///< command
+    bool executing;                         ///< command running
+    char response[SIM800_MAX_RESPONSE_LEN]; ///< response
+    uint8_t response_len;                   ///< length of response
+    uint8_t result;                         ///< command result - SIM800_RESULT_XXX
+    char *resultData;                       ///< response result data
     void (*onError)(sim800_t *self);
     void (*transmit)(char *cmd);
     void (*parse)(sim800_t *self); ///< parse response, set executing, result, result_data

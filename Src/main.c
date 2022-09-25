@@ -92,7 +92,7 @@ void sim800_transmit(char *cmd)
 
 void sim800_onError(sim800_t *sim800_data)
 {
-  displaySim800error((char *)sim800_data->command, (char *)sim800_data->response);
+  displaySim800error(sim800_data->command, sim800_data->response);
 }
 
 /* USER CODE END 0 */
@@ -619,7 +619,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == huart2.Instance)
   {
     char msg[30];
-    sprintf((char *)&msg, "UART2 (SIM) Err %lu", huart->ErrorCode);
+    sprintf(msg, "UART2 (SIM) Err %lu", huart->ErrorCode);
     display(msg);
 
     HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
