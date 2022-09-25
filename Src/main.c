@@ -65,7 +65,6 @@ uint8_t uart2RX[1];  // SIM800l
 sim800_t sim800_data;
 
 bool sendTelemetry;
-bool sendingTelemetry;
 
 /* USER CODE END PV */
 
@@ -150,10 +149,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-    if (sendTelemetry && !sendingTelemetry)
+    if (sendTelemetry)
     {
-      sendingTelemetry = true;
       display("Sending Telemetry");
       HAL_Delay(500);
 
@@ -161,17 +158,18 @@ int main(void)
       {
         display("Connect OK");
         HAL_Delay(1000);
-        // display("Send");
-        // if (sim800_send(&sim800_data, "Hello from SIM800"))
-        // {
-        //   display("Send OK");
-        //   HAL_Delay(1000);
-        // }
-        // else
-        // {
-        //   display("Send ERROR");
-        //   HAL_Delay(1000);
-        // }
+
+        display("Send");
+        if (sim800_send(&sim800_data, "Hello from SIM800"))
+        {
+          display("Send OK");
+          HAL_Delay(1000);
+        }
+        else
+        {
+          display("Send ERROR");
+          HAL_Delay(1000);
+        }
       }
       else
       {
@@ -179,9 +177,8 @@ int main(void)
         HAL_Delay(1000);
       }
 
-      display("Disconnect");
-      sim800_disconnect(&sim800_data);
-      sendingTelemetry = false;
+      // display("Disconnect");
+      // sim800_disconnect(&sim800_data);
     }
 
     /*

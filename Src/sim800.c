@@ -78,6 +78,11 @@ void sim800_receiveChar(uint8_t c, sim800_t *p)
     // new line received, parse response
     p->parse(p);
   }
+  if (p->response_len == 4 && !strncmp("\r\n> ", p->response, 4))
+  {
+    // response for AT+CIPSEND= received
+    p->parse(p);
+  }
 }
 
 static void sim800_parse_ok(sim800_t *p)
@@ -182,6 +187,51 @@ static void sim800_parse_connectTCP(sim800_t *p)
   // }
 }
 
+static void sim800_parse_send1(sim800_t *p)
+{
+  if (strlen(p->response) < 3)
+    return;
+
+  if (!strcmp("\r\n> ", p->response))
+  {
+    p->executing = false;
+    p->result = SIM800_RESULT_SUCCESS;
+    return;
+  }
+
+  p->executing = false;
+  p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
+  return;
+
+  // if (strlen(p->response) > 9)
+  // {
+  //   p->executing = false;
+  //   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
+  //   return;
+  // }
+}
+
+static void sim800_parse_send2(sim800_t *p)
+{
+  if (!strcmp("SEND OK", p->response))
+  {
+    p->executing = false;
+    p->result = SIM800_RESULT_SUCCESS;
+    return;
+  }
+
+  p->executing = false;
+  p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
+  return;
+
+  // if (strlen(p->response) > 9)
+  // {
+  //   p->executing = false;
+  //   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
+  //   return;
+  // }
+}
+
 static void sim800_parse_shut(sim800_t *p)
 {
   if (!strcmp("\r\nSHUT OK\r\n", p->response))
@@ -235,7 +285,14 @@ bool sim800_connect(sim800_t *p)
   display("AT OK");
   HAL_Delay(1000);
 
-  sim800_showStatus(p);
+  // check status
+  {
+    char *status = sim800_status(p);
+    display(status);
+    HAL_Delay(1000);
+    if (!strcmp("CONNECT OK", status))
+      return true;
+  }
 
   // Set APN;
   // IP INITIAL => IP START
@@ -314,16 +371,18 @@ bool sim800_connect(sim800_t *p)
 
 bool sim800_send(sim800_t *p, char *msg)
 {
-  // char cmd[22];
-  // sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
+  char cmd[22];
+  sprintf((char *)&cmd, "AT+CIPSEND=%d", strlen(msg));
+  display(cmd);
   // expected ">"
-  // if (sim800_cmd(p, cmd, false))
-  //   return false;
+  if (!sim800_cmd(p, cmd, sim800_parse_send1, 100000))
+    return false;
 
-  // HAL_Delay(1000);
+  HAL_Delay(1000);
   // expected "SEND OK"
-  // if (sim800_cmd(p, msg, true))
-  //   return false;
+  display(msg);
+  if (!sim800_cmd(p, msg, sim800_parse_send2, 1000))
+    return false;
 
   return true;
 }
