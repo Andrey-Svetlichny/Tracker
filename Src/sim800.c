@@ -37,6 +37,8 @@ static bool sim800_cmd(sim800_t *p, char *cmd, void (*responseParser)(sim800_t *
   uint32_t tickstart = HAL_GetTick();
   while (HAL_GetTick() - tickstart < timeout)
   {
+    p->parse(p);
+
     if (!p->executing && p->result != SIM800_RESULT_NO_RESULT_YET)
     {
       if (p->result == SIM800_RESULT_SUCCESS)
@@ -73,16 +75,6 @@ void sim800_receiveChar(uint8_t c, sim800_t *p)
   }
 
   p->response[p->response_len++] = c;
-  if (p->response_len > 1 && p->response[p->response_len - 1] == '\n' && p->response[p->response_len - 2] == '\r')
-  {
-    // new line received, parse response
-    p->parse(p);
-  }
-  if (p->response_len == 4 && !strncmp("\r\n> ", p->response, 4))
-  {
-    // response for AT+CIPSEND= received
-    p->parse(p);
-  }
 }
 
 static void sim800_parse_ok(sim800_t *p)
@@ -112,6 +104,9 @@ static void sim800_parse_status(sim800_t *p)
   if (strlen(p->response) < 15)
     return;
 
+  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
+    return;
+
   if (strncmp("\r\nOK\r\n\r\nSTATE: ", p->response, 6))
   {
     p->executing = false;
@@ -126,6 +121,9 @@ static void sim800_parse_status(sim800_t *p)
 static void sim800_parseIP(sim800_t *p)
 {
   if (strlen(p->response) < 5)
+    return;
+
+  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
     return;
 
   if (!strcmp("\r\nERROR\r\n", p->response))
@@ -150,6 +148,9 @@ static void sim800_parseIP(sim800_t *p)
 static void sim800_parse_connectTCP(sim800_t *p)
 {
   if (strlen(p->response) < 6)
+    return;
+
+  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
     return;
 
   if (!strcmp("\r\nOK\r\n", p->response))
@@ -189,7 +190,7 @@ static void sim800_parse_connectTCP(sim800_t *p)
 
 static void sim800_parse_send1(sim800_t *p)
 {
-  if (strlen(p->response) < 3)
+  if (strlen(p->response) < 4)
     return;
 
   if (!strcmp("\r\n> ", p->response))
@@ -213,7 +214,10 @@ static void sim800_parse_send1(sim800_t *p)
 
 static void sim800_parse_send2(sim800_t *p)
 {
-  if (!strcmp("SEND OK", p->response))
+  if (strlen(p->response) < 11)
+    return;
+
+  if (!strcmp("\r\nSEND OK\r\n", p->response))
   {
     p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
@@ -223,17 +227,13 @@ static void sim800_parse_send2(sim800_t *p)
   p->executing = false;
   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
   return;
-
-  // if (strlen(p->response) > 9)
-  // {
-  //   p->executing = false;
-  //   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-  //   return;
-  // }
 }
 
 static void sim800_parse_shut(sim800_t *p)
 {
+  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
+    return;
+
   if (!strcmp("\r\nSHUT OK\r\n", p->response))
   {
     p->executing = false;
@@ -381,7 +381,7 @@ bool sim800_send(sim800_t *p, char *msg)
   HAL_Delay(1000);
   display(">");
 
-  HAL_Delay(3000);
+  HAL_Delay(1000);
   // expected "SEND OK"
   display(msg);
   if (!sim800_cmd(p, msg, sim800_parse_send2, 5000))
