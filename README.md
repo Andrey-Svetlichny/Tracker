@@ -47,3 +47,47 @@ sim800("ATE0"); // Set Command Echo Mode OFF - don't use ?
 sim800("ATV0"); // Set TA Response Format - result codes
 sim800("AT&W"); // Save
 _/
+
+# test SIM800L with FTDI
+
+set FTDI to 3.3V
+
+## wiring
+
+```
+FTDI SIM800L
+
+GNG - GND
+TXD - RXD
+RXD - TXD
+
+Connect SIM800L to Power supply 4.1V
+```
+
+use PuTTY
+
+Connection type: Serial
+Serial line: see in device manager
+Speed: 9600
+Terminal -> Line discipline options
+
+- Local echo: Force on
+- Local line editing: Force on
+
+AT
+AT+CSTT="TM"
+AT+CIICR
+AT+CIFSR
+AT+CIPSTART="TCP","mail-verif.com",20300
+
+AT+CIPSEND=5
+HELLO
+
+AT+CIPCLOSE
+AT+CIPSHUT
+
+// check status
+AT+CIPSTATUS
+
+// check voltage
+AT+CBC

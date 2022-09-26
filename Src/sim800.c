@@ -379,10 +379,28 @@ bool sim800_send(sim800_t *p, char *msg)
     return false;
 
   HAL_Delay(1000);
+  display(">");
+
+  HAL_Delay(3000);
   // expected "SEND OK"
   display(msg);
-  if (!sim800_cmd(p, msg, sim800_parse_send2, 1000))
+  if (!sim800_cmd(p, msg, sim800_parse_send2, 5000))
     return false;
+  // {
+  //   // wait
+  //   display("waiting 3sec");
+  //   HAL_Delay(3000);
+
+  //   // check status
+  //   char *status = sim800_status(p);
+  //   display(status);
+  //   HAL_Delay(1000);
+
+  //   if (strcmp("SEND OK", status))
+  //     return false;
+  //   display("SEND OK");
+  //   HAL_Delay(1000);
+  // }
 
   return true;
 }
