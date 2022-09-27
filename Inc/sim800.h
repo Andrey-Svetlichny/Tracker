@@ -20,7 +20,7 @@ typedef struct sim800_t
     char command[SIM800_MAX_COMMAND_LEN];   ///< command
     bool executing;                         ///< command running
     char response[SIM800_MAX_RESPONSE_LEN]; ///< response
-    uint8_t response_len;                   ///< length of response
+    uint8_t response_len;                   ///< length of response, 0 means ready to receive
     uint8_t result;                         ///< command result - SIM800_RESULT_XXX
     char *resultData;                       ///< response result data
     void (*onError)(sim800_t *self);
@@ -28,7 +28,6 @@ typedef struct sim800_t
     void (*parse)(sim800_t *self); ///< parse response, set executing, result, result_data
 } sim800_t;
 
-void sim800_receiveChar(uint8_t c, sim800_t *p);
 bool sim800_connect(sim800_t *p);
 bool sim800_send(sim800_t *p, char *msg);
 void sim800_disconnect(sim800_t *p);

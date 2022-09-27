@@ -37,6 +37,9 @@ static bool sim800_cmd(sim800_t *p, char *cmd, void (*responseParser)(sim800_t *
   uint32_t tickstart = HAL_GetTick();
   while (HAL_GetTick() - tickstart < timeout)
   {
+    if (!p->response_len)
+      continue;
+
     p->parse(p);
 
     if (!p->executing && p->result != SIM800_RESULT_NO_RESULT_YET)
@@ -58,200 +61,121 @@ static bool sim800_cmd(sim800_t *p, char *cmd, void (*responseParser)(sim800_t *
   return false;
 }
 
-// next char received from UART
-void sim800_receiveChar(uint8_t c, sim800_t *p)
-{
-  if (!p->executing)
-  {
-    // ignore
-    return;
-  }
-
-  if (p->response_len == SIM800_MAX_RESPONSE_LEN)
-  {
-    // response buffer full
-    p->executing = false;
-    p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-  }
-
-  p->response[p->response_len++] = c;
-}
-
 static void sim800_parse_ok(sim800_t *p)
 {
+  p->executing = false;
   if (!strcmp("\r\nOK\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
     return;
   }
   if (!strcmp("\r\nERROR\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_ERROR;
     return;
   }
-  if (strlen(p->response) > 9)
-  {
-    p->executing = false;
-    p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-    return;
-  }
+  p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
 }
 
 static void sim800_parse_status(sim800_t *p)
 {
-  if (strlen(p->response) < 15)
-    return;
-
-  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
-    return;
-
-  if (strncmp("\r\nOK\r\n\r\nSTATE: ", p->response, 6))
+  p->executing = false;
+  if (!strncmp("\r\nOK\r\n\r\nSTATE: ", p->response, 6))
   {
-    p->executing = false;
-    p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
+    p->resultData = p->response + 15;
+    p->result = SIM800_RESULT_SUCCESS;
     return;
   }
-  p->executing = false;
-  p->resultData = p->response + 15;
-  p->result = SIM800_RESULT_SUCCESS;
+  p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
 }
 
 static void sim800_parseIP(sim800_t *p)
 {
-  if (strlen(p->response) < 5)
-    return;
-
-  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
-    return;
-
-  if (!strcmp("\r\nERROR\r\n", p->response))
+  p->executing = false;
+  if (strlen(p->response) < 5 || strlen(p->response) > 19 || p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
   {
-    p->executing = false;
-    p->result = SIM800_RESULT_ERROR;
-    return;
-  }
-
-  if (strlen(p->response) > 19)
-  {
-    p->executing = false;
     p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
     return;
   }
 
-  p->executing = false;
+  if (!strcmp("\r\nERROR\r\n", p->response))
+  {
+    p->result = SIM800_RESULT_ERROR;
+    return;
+  }
+
   p->resultData = p->response + 2;
   p->result = SIM800_RESULT_SUCCESS;
 }
 
 static void sim800_parse_connectTCP(sim800_t *p)
 {
-  if (strlen(p->response) < 6)
-    return;
-
-  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
-    return;
-
+  p->executing = false;
   if (!strcmp("\r\nOK\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
     return;
   }
 
   if (!strcmp("\r\nALREADY CONNECT\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
     return;
   }
 
   if (!strcmp("\r\nCONNECT OK\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
     return;
   }
 
   if (!strncmp("\r\n+CME ERROR ", p->response, 13))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_ERROR;
     return;
   }
-  // if (strlen(p->response) > 9)
-  // {
-  //   p->executing = false;
-  //   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-  //   return;
-  // }
+
+  p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
 }
 
 static void sim800_parse_send1(sim800_t *p)
 {
-  if (strlen(p->response) < 4)
-    return;
-
+  p->executing = false;
   if (!strcmp("\r\n> ", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
     return;
   }
 
-  p->executing = false;
   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-  return;
-
-  // if (strlen(p->response) > 9)
-  // {
-  //   p->executing = false;
-  //   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-  //   return;
-  // }
 }
 
 static void sim800_parse_send2(sim800_t *p)
 {
-  if (strlen(p->response) < 11)
-    return;
-
+  p->executing = false;
   if (!strcmp("\r\nSEND OK\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
     return;
   }
 
-  p->executing = false;
   p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-  return;
 }
 
 static void sim800_parse_shut(sim800_t *p)
 {
-  if (p->response[p->response_len - 2] != '\r' || p->response[p->response_len - 1] != '\n')
-    return;
-
+  p->executing = false;
   if (!strcmp("\r\nSHUT OK\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_SUCCESS;
     return;
   }
   if (!strcmp("\r\nERROR\r\n", p->response))
   {
-    p->executing = false;
     p->result = SIM800_RESULT_ERROR;
     return;
   }
-  if (strlen(p->response) > 11)
-  {
-    p->executing = false;
-    p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
-    return;
-  }
+  p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
 }
 
 // Query Current Connection Status

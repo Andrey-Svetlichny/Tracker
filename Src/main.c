@@ -59,9 +59,9 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
-uint32_t adc_raw[2]; // ADC reading - IN1, Vbat
-float vbat;          // battery voltage
-uint8_t uart2RX[1];  // SIM800l
+uint32_t adc_raw[2];                      // ADC reading - IN1, Vbat
+float vbat;                               // battery voltage
+uint8_t uart2RX[SIM800_MAX_RESPONSE_LEN]; // SIM800l
 sim800_t sim800_data;
 
 bool sendTelemetry;
@@ -141,7 +141,8 @@ int main(void)
   led_hello();
 
   HAL_TIM_Base_Start_IT(&htim3);
-  HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, uart2RX, SIM800_MAX_RESPONSE_LEN);
+  __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
 
   /* USER CODE END 2 */
 
@@ -213,6 +214,7 @@ void SystemClock_Config(void)
    */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
+
   /** Initializes the RCC Oscillators according to the specified parameters
    * in the RCC_OscInitTypeDef structure.
    */
@@ -228,6 +230,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
    */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
@@ -259,6 +262,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
+
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
    */
   hadc1.Instance = ADC1;
@@ -277,6 +281,7 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
    */
   sConfig.Channel = ADC_CHANNEL_1;
@@ -286,6 +291,7 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
    */
   sConfig.Channel = ADC_CHANNEL_VBAT;
@@ -602,12 +608,17 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   }
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 {
-  if (huart->Instance == huart2.Instance)
+  if (huart->Instance == USART2)
   {
     /* SIM800L */
-    sim800_receiveChar(uart2RX[0], &sim800_data);
+    if (!sim800_data.response_len)
+    {
+      memcpy(sim800_data.response, uart2RX, size);
+      sim800_data.response_len = size;
+    }
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, uart2RX, SIM800_MAX_RESPONSE_LEN);
   }
 }
 
@@ -652,5 +663,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
