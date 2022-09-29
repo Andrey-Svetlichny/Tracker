@@ -25,7 +25,6 @@ typedef struct sim800_t
     char *resultData;                       ///< response result data
     void (*onError)(sim800_t *self);
     void (*transmit)(char *cmd);
-    void (*parse)(sim800_t *self); ///< parse response, set executing, result, result_data
 } sim800_t;
 
 bool sim800_connect(sim800_t *p);

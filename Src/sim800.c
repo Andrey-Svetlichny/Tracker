@@ -111,6 +111,8 @@ static void sim800_parseSend1(sim800_t *p)
 {
   if (!strcmp("\r\n> ", p->response))
     p->result = SIM800_RESULT_SUCCESS;
+  else if (!strcmp("\r\nERROR\r\n", p->response))
+    p->result = SIM800_RESULT_ERROR;
   else
     p->result = SIM800_RESULT_RESPONSE_NOT_RECOGNIZED;
 }
@@ -185,7 +187,7 @@ bool sim800_connect(sim800_t *p)
   // Activate GPRS or CSD
   // Max Response Time 85 seconds
   // IP START => IP CONFIG => IP GPRSACT
-  if (!strcmp("IP INITIAL", status))
+  if (!strcmp("IP START", status))
   {
     display("GPRS");
     HAL_Delay(500);
@@ -246,7 +248,7 @@ bool sim800_connect(sim800_t *p)
   }
 
   display("Connect TCP OK");
-  HAL_Delay(5000);
+  HAL_Delay(2000);
   return true;
 }
 
@@ -281,5 +283,5 @@ void sim800_disconnect(sim800_t *p)
   }
 
   display("Disonnect OK");
-  HAL_Delay(5000);
+  HAL_Delay(3000);
 }

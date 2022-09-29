@@ -630,7 +630,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     sprintf(msg, "UART2 (SIM) Err %lu", huart->ErrorCode);
     display(msg);
 
-    HAL_UART_Receive_DMA(&huart2, uart2RX, 1);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, uart2RX, SIM800_MAX_RESPONSE_LEN);
   }
 }
 /* USER CODE END 4 */
