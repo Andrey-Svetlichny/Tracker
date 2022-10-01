@@ -40,13 +40,10 @@ use Cortex-Debug 1.4.4 to avoid error "GDB major version should be >= 9, yours i
 make flash
 ```
 
-# SIM800L initial configuration - set parameters and save - run once for new SIM800L
+# SIM800L initial configuration - Set Command Echo Mode OFF - run once for new SIM800L
 
-/_
-sim800("ATE0"); // Set Command Echo Mode OFF - don't use ?
-sim800("ATV0"); // Set TA Response Format - result codes
-sim800("AT&W"); // Save
-_/
+ATE0
+AT&W
 
 # test SIM800L with FTDI
 
@@ -91,3 +88,8 @@ AT+CIPSTATUS
 
 // check voltage
 AT+CBC
+
+# SIM800L - commands reference
+
+// Set TA Response Format - result codes
+ATV0
