@@ -13,43 +13,6 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
-$Comp
-L myLib:SIM800L U?
-U 1 1 5FBB5448
-P 7100 3750
-F 0 "U?" H 7378 3796 50  0001 L CNN
-F 1 "SIM800L" H 6950 3300 50  0000 L CNN
-F 2 "" H 7100 4150 50  0001 C CNN
-F 3 "" H 7100 4150 50  0001 C CNN
-	1    7100 3750
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	6150 3700 6250 3900
-Wire Wire Line
-	6750 3600 6600 3600
-$Comp
-L Device:R R?
-U 1 1 5FBC7BFE
-P 5600 2850
-F 0 "R?" H 5450 2800 50  0001 C CNN
-F 1 "6k8" H 5450 2850 50  0000 C CNN
-F 2 "" V 5530 2850 50  0001 C CNN
-F 3 "~" H 5600 2850 50  0001 C CNN
-	1    5600 2850
-	-1   0    0    1   
-$EndComp
-$Comp
-L Device:CP C?
-U 1 1 5FBC947C
-P 6300 4650
-F 0 "C?" H 6550 4700 50  0001 C CNN
-F 1 "470mF" H 6550 4600 50  0000 C CNN
-F 2 "" H 6338 4500 50  0001 C CNN
-F 3 "~" H 6300 4650 50  0001 C CNN
-	1    6300 4650
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	3950 4400 4550 4400
 Wire Wire Line
@@ -62,156 +25,17 @@ Wire Wire Line
 	3950 4400 3950 4800
 Connection ~ 3950 4400
 Wire Wire Line
-	5450 3700 6150 3700
-Wire Wire Line
 	4050 3600 4050 3700
-$Comp
-L Device:Battery_Cell BT?
-U 1 1 5FBD92D9
-P 5750 4700
-F 0 "BT?" H 6000 4800 50  0001 C CNN
-F 1 "250mAh" H 6000 4700 50  0000 C CNN
-F 2 "" V 5750 4760 50  0001 C CNN
-F 3 "~" V 5750 4760 50  0001 C CNN
-	1    5750 4700
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3950 4800 5600 4800
-Connection ~ 5750 4500
-Wire Wire Line
-	5750 4500 5450 4500
-Connection ~ 5750 4800
-Wire Wire Line
-	5750 4800 6300 4800
-Wire Wire Line
-	6750 4000 6750 4800
-Connection ~ 6300 4500
-Connection ~ 6300 4800
-Wire Wire Line
-	6300 4800 6750 4800
-Wire Wire Line
-	5450 3800 6750 3800
-Wire Wire Line
-	5600 3900 5600 4100
-Wire Wire Line
-	5450 3900 5600 3900
-Wire Wire Line
-	5600 4400 5600 4800
-Connection ~ 5600 4800
-Wire Wire Line
-	5600 4800 5750 4800
-Connection ~ 5600 3900
-Wire Wire Line
-	6750 3900 6250 3900
-Wire Wire Line
-	6350 2600 6350 2900
-Wire Wire Line
-	5450 2600 5600 2600
-$Comp
-L Device:LED D?
-U 1 1 5FC2FAC7
-P 5850 3100
-F 0 "D?" H 5700 2950 50  0001 C CNN
-F 1 "LED" H 5700 2900 50  0000 C CNN
-F 2 "" H 5850 3100 50  0001 C CNN
-F 3 "~" H 5850 3100 50  0001 C CNN
-	1    5850 3100
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	5450 3100 5700 3100
-Connection ~ 6600 3600
-Wire Wire Line
-	6600 3600 6350 3600
-$Comp
-L Device:R R?
-U 1 1 5FBC87D2
-P 5600 4250
-F 0 "R?" H 5750 4300 50  0001 C CNN
-F 1 "10k" H 5750 4250 50  0000 C CNN
-F 2 "" V 5530 4250 50  0001 C CNN
-F 3 "~" H 5600 4250 50  0001 C CNN
-	1    5600 4250
-	1    0    0    -1  
-$EndComp
 Text Notes 4150 3200 0    50   ~ 0
 UART1 TX
 Text Notes 4150 3100 0    50   ~ 0
 UART1 RX\n
-Wire Wire Line
-	5600 2700 5600 2600
-Connection ~ 5600 2600
-Wire Wire Line
-	5600 2600 6000 2600
-Wire Wire Line
-	5600 3000 5600 3900
-Wire Wire Line
-	5750 4500 6300 4500
 Text Notes 3400 3100 0    50   ~ 0
 TX
 Text Notes 3400 3200 0    50   ~ 0
 RX
 Text Notes 3400 3000 0    50   ~ 0
 5V
-Connection ~ 6350 2600
-Wire Wire Line
-	6000 2700 6000 2600
-Connection ~ 6000 2600
-Wire Wire Line
-	6000 2600 6350 2600
-Wire Wire Line
-	6000 3000 6000 3100
-Wire Wire Line
-	6350 2600 6600 2600
-Wire Wire Line
-	6600 3000 6600 3600
-Wire Wire Line
-	6600 2700 6600 2600
-$Comp
-L Device:D D?
-U 1 1 5FC34600
-P 6600 2850
-F 0 "D?" V 6554 2930 50  0001 L CNN
-F 1 "1N5819" V 6600 2950 50  0000 L CNN
-F 2 "" H 6600 2850 50  0001 C CNN
-F 3 "~" H 6600 2850 50  0001 C CNN
-	1    6600 2850
-	0    1    1    0   
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 5FC1A3F2
-P 6000 2850
-F 0 "R?" H 5850 2800 50  0001 C CNN
-F 1 "10k" H 5850 2850 50  0000 C CNN
-F 2 "" V 5930 2850 50  0001 C CNN
-F 3 "~" H 6000 2850 50  0001 C CNN
-	1    6000 2850
-	-1   0    0    1   
-$EndComp
-$Comp
-L Transistor_FET:AO3401A Q?
-U 1 1 60218619
-P 6250 3100
-F 0 "Q?" H 6000 3250 50  0001 L CNN
-F 1 "AO3401A" H 5900 3300 50  0000 L CNN
-F 2 "Package_TO_SOT_SMD:SOT-23" H 6450 3025 50  0001 L CIN
-F 3 "http://www.aosmd.com/pdfs/datasheet/AO3401A.pdf" H 6250 3100 50  0001 L CNN
-	1    6250 3100
-	1    0    0    1   
-$EndComp
-Wire Wire Line
-	6300 4500 6600 4500
-Wire Wire Line
-	6600 4500 6600 3600
-Wire Wire Line
-	6000 3100 6050 3100
-Connection ~ 6000 3100
-Text Notes 5500 3800 0    50   ~ 0
-UART2 TX
-Text Notes 5500 3700 0    50   ~ 0
-UART2 RX\n
 $Comp
 L Device:D D?
 U 1 1 5FC14E46
@@ -222,17 +46,6 @@ F 2 "" H 4050 3450 50  0001 C CNN
 F 3 "~" H 4050 3450 50  0001 C CNN
 	1    4050 3450
 	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 5FBD5AD0
-P 6350 3450
-F 0 "R?" H 6420 3496 50  0001 L CNN
-F 1 "10" H 6476 3450 50  0000 C CNN
-F 2 "" V 6280 3450 50  0001 C CNN
-F 3 "~" H 6350 3450 50  0001 C CNN
-	1    6350 3450
-	1    0    0    -1  
 $EndComp
 $Comp
 L myLib:OLED_SSD1306 U?
@@ -366,4 +179,215 @@ Wire Wire Line
 	3750 3000 4050 3000
 Wire Wire Line
 	4050 3000 4050 3300
+$Comp
+L myLib:SIM800L U?
+U 1 1 5FBB5448
+P 7350 3750
+F 0 "U?" H 7628 3796 50  0001 L CNN
+F 1 "SIM800L" H 7200 3300 50  0000 L CNN
+F 2 "" H 7350 4150 50  0001 C CNN
+F 3 "" H 7350 4150 50  0001 C CNN
+	1    7350 3750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6400 3700 6500 3900
+Wire Wire Line
+	7000 3600 6850 3600
+Wire Wire Line
+	5450 3700 6400 3700
+Wire Wire Line
+	7000 4000 7000 4800
+Wire Wire Line
+	5450 3800 7000 3800
+Wire Wire Line
+	7000 3900 6500 3900
+Wire Wire Line
+	6600 2600 6600 2900
+$Comp
+L Device:LED D?
+U 1 1 5FC2FAC7
+P 6100 3100
+F 0 "D?" H 5950 2950 50  0001 C CNN
+F 1 "LED" H 5950 2900 50  0000 C CNN
+F 2 "" H 6100 3100 50  0001 C CNN
+F 3 "~" H 6100 3100 50  0001 C CNN
+	1    6100 3100
+	1    0    0    -1  
+$EndComp
+Connection ~ 6850 3600
+Wire Wire Line
+	6850 3600 6600 3600
+Connection ~ 6600 2600
+Wire Wire Line
+	6250 2700 6250 2600
+Connection ~ 6250 2600
+Wire Wire Line
+	6250 2600 6600 2600
+Wire Wire Line
+	6250 3000 6250 3100
+Wire Wire Line
+	6600 2600 6850 2600
+Wire Wire Line
+	6850 3000 6850 3600
+Wire Wire Line
+	6850 2700 6850 2600
+$Comp
+L Device:D D?
+U 1 1 5FC34600
+P 6850 2850
+F 0 "D?" V 6804 2930 50  0001 L CNN
+F 1 "1N5819" V 6850 2950 50  0000 L CNN
+F 2 "" H 6850 2850 50  0001 C CNN
+F 3 "~" H 6850 2850 50  0001 C CNN
+	1    6850 2850
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5FC1A3F2
+P 6250 2850
+F 0 "R?" H 6100 2800 50  0001 C CNN
+F 1 "10k" H 6100 2850 50  0000 C CNN
+F 2 "" V 6180 2850 50  0001 C CNN
+F 3 "~" H 6250 2850 50  0001 C CNN
+	1    6250 2850
+	-1   0    0    1   
+$EndComp
+$Comp
+L Transistor_FET:AO3401A Q?
+U 1 1 60218619
+P 6500 3100
+F 0 "Q?" H 6250 3250 50  0001 L CNN
+F 1 "AO3401A" H 6150 3300 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23" H 6700 3025 50  0001 L CIN
+F 3 "http://www.aosmd.com/pdfs/datasheet/AO3401A.pdf" H 6500 3100 50  0001 L CNN
+	1    6500 3100
+	1    0    0    1   
+$EndComp
+Wire Wire Line
+	6850 4500 6850 3600
+Wire Wire Line
+	6250 3100 6300 3100
+Connection ~ 6250 3100
+$Comp
+L Device:R R?
+U 1 1 5FBD5AD0
+P 6600 3450
+F 0 "R?" H 6670 3496 50  0001 L CNN
+F 1 "10" H 6726 3450 50  0000 C CNN
+F 2 "" V 6530 3450 50  0001 C CNN
+F 3 "~" H 6600 3450 50  0001 C CNN
+	1    6600 3450
+	1    0    0    -1  
+$EndComp
+Connection ~ 6000 4500
+Connection ~ 6000 4800
+Connection ~ 5850 2600
+Text Notes 5450 3700 0    50   ~ 0
+UART2 RX\n
+Text Notes 5450 3800 0    50   ~ 0
+UART2 TX
+Wire Wire Line
+	5850 3000 5850 3900
+Wire Wire Line
+	5850 2700 5850 2600
+$Comp
+L Device:R R?
+U 1 1 5FBC87D2
+P 5850 4250
+F 0 "R?" H 6000 4300 50  0001 C CNN
+F 1 "10k" H 6000 4250 50  0000 C CNN
+F 2 "" V 5780 4250 50  0001 C CNN
+F 3 "~" H 5850 4250 50  0001 C CNN
+	1    5850 4250
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5450 3100 5950 3100
+Connection ~ 5850 3900
+Wire Wire Line
+	5850 4800 6000 4800
+Connection ~ 5850 4800
+Wire Wire Line
+	5850 4400 5850 4800
+Wire Wire Line
+	5450 3900 5850 3900
+Wire Wire Line
+	5850 3900 5850 4100
+Wire Wire Line
+	6000 4500 5450 4500
+$Comp
+L Device:Battery_Cell BT?
+U 1 1 5FBD92D9
+P 6000 4700
+F 0 "BT?" H 6250 4800 50  0001 C CNN
+F 1 "250mAh" H 6250 4700 50  0000 C CNN
+F 2 "" V 6000 4760 50  0001 C CNN
+F 3 "~" V 6000 4760 50  0001 C CNN
+	1    6000 4700
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5FBC7BFE
+P 5850 2850
+F 0 "R?" H 5700 2800 50  0001 C CNN
+F 1 "6k8" H 5700 2850 50  0000 C CNN
+F 2 "" V 5780 2850 50  0001 C CNN
+F 3 "~" H 5850 2850 50  0001 C CNN
+	1    5850 2850
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	5850 2600 6250 2600
+Wire Wire Line
+	3950 4800 5850 4800
+Wire Wire Line
+	5500 2700 5450 2700
+Wire Wire Line
+	5550 2800 5500 2700
+$Comp
+L Device:CP_Small C?
+U 1 1 63447EEA
+P 5650 2700
+F 0 "C?" H 5738 2746 50  0001 L CNN
+F 1 "220mF" H 5500 2550 50  0000 L CNN
+F 2 "" H 5650 2700 50  0001 C CNN
+F 3 "~" H 5650 2700 50  0001 C CNN
+	1    5650 2700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5450 2600 5650 2600
+Wire Wire Line
+	5650 2800 5550 2800
+Connection ~ 5650 2600
+Wire Wire Line
+	5650 2600 5850 2600
+Wire Wire Line
+	6000 4800 6550 4800
+Wire Wire Line
+	6000 4500 6550 4500
+$Comp
+L Device:CP_Small C?
+U 1 1 6345ADBA
+P 6550 4650
+F 0 "C?" H 6638 4696 50  0001 L CNN
+F 1 "1000mF" H 6650 4600 50  0000 L CNN
+F 2 "" H 6550 4650 50  0001 C CNN
+F 3 "~" H 6550 4650 50  0001 C CNN
+	1    6550 4650
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6550 4550 6550 4500
+Connection ~ 6550 4500
+Wire Wire Line
+	6550 4500 6850 4500
+Wire Wire Line
+	6550 4750 6550 4800
+Connection ~ 6550 4800
+Wire Wire Line
+	6550 4800 7000 4800
 $EndSCHEMATC
