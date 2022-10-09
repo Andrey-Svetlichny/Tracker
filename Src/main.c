@@ -613,6 +613,13 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
   if (huart->Instance == USART2)
   {
     /* SIM800L */
+    if (size < 3)
+    {
+      // ignore noice
+      HAL_UARTEx_ReceiveToIdle_DMA(&huart2, uart2RX, SIM800_MAX_RESPONSE_LEN);
+      return;
+    }
+
     if (!sim800_data.response_len)
     {
       memcpy(sim800_data.response, uart2RX, size);
